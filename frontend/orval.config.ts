@@ -4,7 +4,7 @@ import { defineConfig } from 'orval';
 // Run `npm run api:generate` after the backend has produced ../backend/openapi.json.
 export default defineConfig({
   store: {
-    input: '../backend/openapi.json',
+    input: './openapi.json',
     output: {
       mode: 'tags-split',
       target: './src/api/generated',

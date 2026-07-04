@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated OpenAPI schema (produced by backend: manage.py export_openapi)
+openapi.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
