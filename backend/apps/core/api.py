@@ -1,5 +1,7 @@
 from ninja import NinjaAPI, Schema
 
+from apps.catalog.api import router as catalog_router
+
 api = NinjaAPI(title="Online Store API", version="1.0.0")
 
 
@@ -11,3 +13,6 @@ class HealthOut(Schema):
 def health(request):
     """Liveness probe used to verify the API is up."""
     return {"status": "ok"}
+
+
+api.add_router("/catalog", catalog_router)

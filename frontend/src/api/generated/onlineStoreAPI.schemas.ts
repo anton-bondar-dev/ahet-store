@@ -8,3 +8,20 @@ export interface HealthOut {
   status: string;
 }
 
+export interface CategoryOut {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+}
+
+export interface ProductOut {
+  id: number;
+  title: string;
+  slug: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  price: string;
+  description: string;
+  category: CategoryOut;
+}
+
