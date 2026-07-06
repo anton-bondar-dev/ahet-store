@@ -23,5 +23,11 @@ export interface ProductOut {
   price: string;
   description: string;
   category: CategoryOut;
+  sku: string | null;
+  stock: number;
+  is_active: boolean;
+  discount_price: string | null;
+  discount_end_date: string | null;
+  image: string | null;
 }
 
