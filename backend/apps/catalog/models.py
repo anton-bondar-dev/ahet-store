@@ -25,6 +25,14 @@ class Product(models.Model):
     slug = models.SlugField(max_length=255, unique=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True)
+    sku = models.CharField(max_length=50, unique=True, blank=True, null=True)
+    stock = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    discount_price = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
+    discount_end_date = models.DateTimeField(blank=True, null=True)
+    image = models.ImageField(upload_to="products/images/", blank=True, null=True)
 
     class Meta:
         verbose_name = "Product"

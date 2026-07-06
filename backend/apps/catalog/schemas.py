@@ -1,4 +1,6 @@
+from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from ninja import Schema
 
@@ -17,3 +19,13 @@ class ProductOut(Schema):
     price: Decimal
     description: str
     category: CategoryOut
+    sku: Optional[str]
+    stock: int
+    is_active: bool
+    discount_price: Optional[Decimal]
+    discount_end_date: Optional[datetime]
+    image: Optional[str]
+
+    @staticmethod
+    def resolve_image(obj):
+        return obj.image.url if obj.image else None
