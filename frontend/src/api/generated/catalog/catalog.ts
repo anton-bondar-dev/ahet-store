@@ -230,3 +230,93 @@ export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>
 
 
 
+/**
+ * @summary Get Product
+ */
+export const getProduct = (
+    slug: string, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ProductOut>> => {
+
+
+    return axios.default.get(
+      `/api/catalog/${slug}`,options
+    );
+  }
+
+
+
+
+export const getGetProductQueryKey = (slug: string,) => {
+    return [
+    `/api/catalog/${slug}`
+    ] as const;
+    }
+
+
+export const getGetProductQueryOptions = <TData = Awaited<ReturnType<typeof getProduct>>, TError = AxiosError<unknown>>(slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductQueryKey(slug);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProduct>>> = ({ signal }) => getProduct(slug, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: slug !== null && slug !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductQueryResult = NonNullable<Awaited<ReturnType<typeof getProduct>>>
+export type GetProductQueryError = AxiosError<unknown>
+
+
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = AxiosError<unknown>>(
+ slug: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProduct>>,
+          TError,
+          Awaited<ReturnType<typeof getProduct>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = AxiosError<unknown>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProduct>>,
+          TError,
+          Awaited<ReturnType<typeof getProduct>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = AxiosError<unknown>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Product
+ */
+
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = AxiosError<unknown>>(
+ slug: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductQueryOptions(slug,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
