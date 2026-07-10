@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import './api/http' // side-effect: sets axios baseURL before any request
 import './index.css'
 import App from './App.tsx'
+import { Header } from './components/Header.tsx'
 import { ProductDetail } from './pages/ProductDetail.tsx'
 
 const queryClient = new QueryClient()
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <Header />
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/product/:slug" element={<ProductDetail />} />
