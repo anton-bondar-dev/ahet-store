@@ -36,6 +36,24 @@ export interface SuggestionOut {
   type: string;
 }
 
+export interface CartItemOut {
+  id: number;
+  product: ProductOut;
+  quantity: number;
+}
+
+export interface CartOut {
+  items: CartItemOut[];
+  total_quantity: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_price: string;
+}
+
+export interface AddToCartIn {
+  product_id: number;
+  quantity?: number;
+}
+
 export type ListProductsParams = {
 q?: string | null;
 };
