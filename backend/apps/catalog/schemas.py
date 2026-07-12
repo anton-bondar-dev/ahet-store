@@ -12,6 +12,11 @@ class CategoryOut(Schema):
     description: str
 
 
+class SuggestionOut(Schema):
+    text: str
+    type: str  # "category" | "product"
+
+
 class ProductOut(Schema):
     id: int
     title: str
