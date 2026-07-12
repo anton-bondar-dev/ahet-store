@@ -31,3 +31,16 @@ export interface ProductOut {
   image: string | null;
 }
 
+export interface SuggestionOut {
+  text: string;
+  type: string;
+}
+
+export type ListProductsParams = {
+q?: string | null;
+};
+
+export type GetSuggestionsParams = {
+q?: string;
+};
+

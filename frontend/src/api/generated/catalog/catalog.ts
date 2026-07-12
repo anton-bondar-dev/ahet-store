@@ -28,7 +28,10 @@ import type {
 
 import type {
   CategoryOut,
-  ProductOut
+  GetSuggestionsParams,
+  ListProductsParams,
+  ProductOut,
+  SuggestionOut
 } from '../onlineStoreAPI.schemas';
 
 
@@ -144,35 +147,37 @@ export function useListCategories<TData = Awaited<ReturnType<typeof listCategori
  * @summary List Products
  */
 export const listProducts = (
-     options?: AxiosRequestConfig
+    params?: ListProductsParams, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<ProductOut[]>> => {
 
 
     return axios.default.get(
-      `/api/catalog/products`,options
+      `/api/catalog/products`,{
+    ...options,
+        params: {...params, ...options?.params},}
     );
   }
 
 
 
 
-export const getListProductsQueryKey = () => {
+export const getListProductsQueryKey = (params?: ListProductsParams,) => {
     return [
-    `/api/catalog/products`
+    `/api/catalog/products`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListProductsQueryOptions = <TData = Awaited<ReturnType<typeof listProducts>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getListProductsQueryOptions = <TData = Awaited<ReturnType<typeof listProducts>>, TError = AxiosError<unknown>>(params?: ListProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
 const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListProductsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListProductsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProducts>>> = ({ signal }) => listProducts({ signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProducts>>> = ({ signal }) => listProducts(params, { signal, ...axiosOptions });
 
 
 
@@ -186,7 +191,7 @@ export type ListProductsQueryError = AxiosError<unknown>
 
 
 export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>, TError = AxiosError<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>> & Pick<
+ params: undefined |  ListProductsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listProducts>>,
           TError,
@@ -196,7 +201,7 @@ export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>, TError = AxiosError<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>> & Pick<
+ params?: ListProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listProducts>>,
           TError,
@@ -206,7 +211,7 @@ export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>, TError = AxiosError<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, axios?: AxiosRequestConfig}
+ params?: ListProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, axios?: AxiosRequestConfig}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -214,11 +219,103 @@ export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>
  */
 
 export function useListProducts<TData = Awaited<ReturnType<typeof listProducts>>, TError = AxiosError<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, axios?: AxiosRequestConfig}
+ params?: ListProductsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProducts>>, TError, TData>>, axios?: AxiosRequestConfig}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListProductsQueryOptions(options)
+  const queryOptions = getListProductsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * @summary Get Suggestions
+ */
+export const getSuggestions = (
+    params?: GetSuggestionsParams, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<SuggestionOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/catalog/suggestions`,{
+    ...options,
+        params: {...params, ...options?.params},}
+    );
+  }
+
+
+
+
+export const getGetSuggestionsQueryKey = (params?: GetSuggestionsParams,) => {
+    return [
+    `/api/catalog/suggestions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetSuggestionsQueryOptions = <TData = Awaited<ReturnType<typeof getSuggestions>>, TError = AxiosError<unknown>>(params?: GetSuggestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuggestions>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSuggestionsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSuggestions>>> = ({ signal }) => getSuggestions(params, { signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSuggestions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSuggestionsQueryResult = NonNullable<Awaited<ReturnType<typeof getSuggestions>>>
+export type GetSuggestionsQueryError = AxiosError<unknown>
+
+
+export function useGetSuggestions<TData = Awaited<ReturnType<typeof getSuggestions>>, TError = AxiosError<unknown>>(
+ params: undefined |  GetSuggestionsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuggestions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSuggestions>>,
+          TError,
+          Awaited<ReturnType<typeof getSuggestions>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSuggestions<TData = Awaited<ReturnType<typeof getSuggestions>>, TError = AxiosError<unknown>>(
+ params?: GetSuggestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuggestions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSuggestions>>,
+          TError,
+          Awaited<ReturnType<typeof getSuggestions>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSuggestions<TData = Awaited<ReturnType<typeof getSuggestions>>, TError = AxiosError<unknown>>(
+ params?: GetSuggestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuggestions>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Suggestions
+ */
+
+export function useGetSuggestions<TData = Awaited<ReturnType<typeof getSuggestions>>, TError = AxiosError<unknown>>(
+ params?: GetSuggestionsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSuggestions>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSuggestionsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
