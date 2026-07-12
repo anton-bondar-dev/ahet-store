@@ -10,10 +10,10 @@ import { ProductCard } from './components/ProductCard'
 type SortKey = 'newest' | 'price-asc' | 'price-desc' | 'discount'
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
-  { value: 'newest', label: 'Сначала новые' },
-  { value: 'price-asc', label: 'Цена: по возрастанию' },
-  { value: 'price-desc', label: 'Цена: по убыванию' },
-  { value: 'discount', label: 'Наибольшая скидка' },
+  { value: 'newest', label: 'Спочатку нові' },
+  { value: 'price-asc', label: 'Ціна: за зростанням' },
+  { value: 'price-desc', label: 'Ціна: за спаданням' },
+  { value: 'discount', label: 'Найбільша знижка' },
 ]
 
 function effectivePrice(product: ProductOut): number {
@@ -47,10 +47,16 @@ function sortProducts(products: ProductOut[], sortBy: SortKey): ProductOut[] {
 }
 
 function App() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = (searchParams.get('q') ?? '').trim()
+
   const productsQuery = useListProducts()
   const categoriesQuery = useListCategories()
+  const searchQuery = useListProducts(
+    { q: query },
+    { query: { enabled: query.length > 0 } },
+  )
 
-  const [searchParams] = useSearchParams()
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     () => {
       const raw = searchParams.get('categoryId')
@@ -60,14 +66,28 @@ function App() {
   )
   const [sortBy, setSortBy] = useState<SortKey>('newest')
 
+  const selectCategory = (id: number | null) => {
+    setSelectedCategoryId(id)
+    // Leaving search mode when the user starts browsing categories.
+    if (query) {
+      setSearchParams(
+        (prev) => {
+          prev.delete('q')
+          return prev
+        },
+        { replace: true },
+      )
+    }
+  }
+
   if (productsQuery.isLoading || categoriesQuery.isLoading) {
-    return <p className="p-6 text-gray-500">Загрузка товаров…</p>
+    return <p className="p-6 text-gray-500">Завантаження товарів…</p>
   }
   if (productsQuery.isError || categoriesQuery.isError) {
     const err = productsQuery.error ?? categoriesQuery.error
     return (
       <p className="p-6 text-red-600">
-        Не удалось загрузить товары: {String(err)}
+        Не вдалося завантажити товари: {String(err)}
       </p>
     )
   }
@@ -88,54 +108,60 @@ function App() {
       <aside className="w-56 shrink-0">
         <nav className="flex flex-col gap-1">
           <CategoryItem
-            name="Все товары"
+            name="Усі товари"
             count={products.length}
-            active={selectedCategoryId === null}
-            onClick={() => setSelectedCategoryId(null)}
+            active={!query && selectedCategoryId === null}
+            onClick={() => selectCategory(null)}
           />
           {categories.map((category) => (
             <CategoryItem
               key={category.id}
               name={category.name}
               count={countByCategory.get(category.id) ?? 0}
-              active={selectedCategoryId === category.id}
-              onClick={() => setSelectedCategoryId(category.id)}
+              active={!query && selectedCategoryId === category.id}
+              onClick={() => selectCategory(category.id)}
             />
           ))}
         </nav>
       </aside>
 
       <main className="min-w-0 flex-1">
-        <div className="mb-6 flex items-center justify-end">
-          <label className="flex items-center gap-2 text-sm text-gray-600">
-            <span>Сортировка</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {selectedCategoryId === null ? (
-          <AllProductsView
-            products={products}
-            categories={categories}
-            sortBy={sortBy}
-          />
+        {query ? (
+          <SearchResults query={query} search={searchQuery} />
         ) : (
-          <CategoryGrid
-            products={sortProducts(
-              products.filter((p) => p.category.id === selectedCategoryId),
-              sortBy,
+          <>
+            <div className="mb-6 flex items-center justify-end">
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <span>Сортування</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortKey)}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none"
+                >
+                  {SORT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {selectedCategoryId === null ? (
+              <AllProductsView
+                products={products}
+                categories={categories}
+                sortBy={sortBy}
+              />
+            ) : (
+              <CategoryGrid
+                products={sortProducts(
+                  products.filter((p) => p.category.id === selectedCategoryId),
+                  sortBy,
+                )}
+              />
             )}
-          />
+          </>
         )}
       </main>
     </div>
@@ -189,7 +215,7 @@ function AllProductsView({
     .filter((section) => section.items.length > 0)
 
   if (sections.length === 0) {
-    return <p className="text-gray-500">Товаров пока нет.</p>
+    return <p className="text-gray-500">Товарів поки немає.</p>
   }
 
   return (
@@ -212,9 +238,48 @@ function AllProductsView({
   )
 }
 
+function SearchResults({
+  query,
+  search,
+}: {
+  query: string
+  search: {
+    data?: { data: ProductOut[] }
+    isLoading: boolean
+    isError: boolean
+  }
+}) {
+  const results = search.data?.data ?? []
+
+  return (
+    <div>
+      <h1 className="mb-1 text-xl font-semibold text-gray-900">
+        Результати пошуку: «{query}»
+      </h1>
+      <p className="mb-6 text-sm text-gray-500">
+        {search.isLoading
+          ? 'Пошук…'
+          : `Знайдено товарів: ${results.length}`}
+      </p>
+
+      {search.isError ? (
+        <p className="text-red-600">Не вдалося виконати пошук.</p>
+      ) : search.isLoading ? null : results.length === 0 ? (
+        <p className="text-gray-500">Нічого не знайдено.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {results.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CategoryGrid({ products }: { products: ProductOut[] }) {
   if (products.length === 0) {
-    return <p className="text-gray-500">В этой категории нет товаров.</p>
+    return <p className="text-gray-500">У цій категорії немає товарів.</p>
   }
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

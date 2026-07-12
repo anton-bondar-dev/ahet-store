@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { SearchBar } from './SearchBar'
 
 export function Header() {
   return (
@@ -12,26 +13,8 @@ export function Header() {
           Магазин
         </Link>
 
-        {/* Search (visual only for now) */}
-        <div className="relative max-w-md flex-1">
-          <svg
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <circle cx="9" cy="9" r="6" />
-            <path d="m14 14 4 4" strokeLinecap="round" />
-          </svg>
-          <input
-            type="search"
-            placeholder="Поиск товаров…"
-            aria-label="Поиск товаров"
-            className="w-full rounded-md border border-gray-300 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:bg-white focus:outline-none"
-          />
-        </div>
+        {/* Search with autocomplete + history */}
+        <SearchBar />
 
         {/* Cart placeholder */}
         <button
@@ -52,7 +35,7 @@ export function Header() {
             <circle cx="20" cy="21" r="1" />
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
-          <span>Корзина (0)</span>
+          <span>Кошик (0)</span>
         </button>
       </div>
     </header>
