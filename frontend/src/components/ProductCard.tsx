@@ -24,7 +24,7 @@ export function ProductCard({
     >
       {isUnavailable && (
         <span className="absolute left-2 top-2 z-30 rounded bg-red-600 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-          Нет в наличии
+          Немає в наявності
         </span>
       )}
 
@@ -37,7 +37,7 @@ export function ProductCard({
             loading="lazy"
           />
         ) : (
-          <span className="text-sm text-gray-400">Нет изображения</span>
+          <span className="text-sm text-gray-400">Немає зображення</span>
         )}
       </div>
 

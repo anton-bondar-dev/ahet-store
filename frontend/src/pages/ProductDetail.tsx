@@ -15,13 +15,13 @@ export function ProductDetail() {
   const product = data?.data
 
   if (isLoading) {
-    return <p className="p-6 text-gray-500">Загрузка товара…</p>
+    return <p className="p-6 text-gray-500">Завантаження товару…</p>
   }
   if (isError || !product) {
     return (
       <div className="mx-auto max-w-4xl p-6">
-        <Breadcrumbs crumbs={[{ label: 'Главная', to: '/' }]} />
-        <p className="mt-6 text-red-600">Товар не найден.</p>
+        <Breadcrumbs crumbs={[{ label: 'Головна', to: '/' }]} />
+        <p className="mt-6 text-red-600">Товар не знайдено.</p>
       </div>
     )
   }
@@ -31,7 +31,7 @@ export function ProductDetail() {
   const onSale = product.discount_price != null && product.is_active
 
   const crumbs: Crumb[] = [
-    { label: 'Главная', to: '/' },
+    { label: 'Головна', to: '/' },
     {
       label: product.category.name,
       to: `/?categoryId=${product.category.id}`,
@@ -54,7 +54,7 @@ export function ProductDetail() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-sm text-gray-400">Нет изображения</span>
+              <span className="text-sm text-gray-400">Немає зображення</span>
             )}
           </div>
         </div>
@@ -85,13 +85,13 @@ export function ProductDetail() {
               inStock ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
             }`}
           >
-            {inStock ? 'В наличии' : 'Нет в наличии'}
+            {inStock ? 'В наявності' : 'Немає в наявності'}
           </span>
 
           {product.description && (
             <div className="border-t border-gray-100 pt-4">
               <h2 className="mb-2 text-sm font-semibold text-gray-900">
-                Описание
+                Опис
               </h2>
               <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">
                 {product.description}
@@ -106,7 +106,7 @@ export function ProductDetail() {
 
 function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
   return (
-    <nav aria-label="Хлебные крошки">
+    <nav aria-label="Навігаційний ланцюжок">
       <ol className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1
@@ -198,7 +198,7 @@ function CopyLinkCrumb({ title }: { title: string }) {
           {/* pointer/arrow */}
           <span className="absolute -top-1 left-6 h-2 w-2 rotate-45 bg-gray-900" />
           <span className="flex-1 leading-relaxed">
-            Ссылка на товар скопирована в буфер обмена!
+            Посилання на товар скопійовано в буфер обміну!
           </span>
           <button
             type="button"
@@ -206,7 +206,7 @@ function CopyLinkCrumb({ title }: { title: string }) {
               clearTimer()
               setCopied(false)
             }}
-            aria-label="Закрыть"
+            aria-label="Закрити"
             className="shrink-0 text-gray-400 transition hover:text-white"
           >
             ✕
