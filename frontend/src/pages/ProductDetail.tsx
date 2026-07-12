@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useGetProduct } from '../api/generated/catalog/catalog'
 import { productImageUrl } from '../api/http'
+import { useCart } from '../hooks/useCart'
 import { formatPrice } from '../lib/format'
 
 type Crumb = { label: string; to?: string; node?: ReactNode }
@@ -88,6 +89,8 @@ export function ProductDetail() {
             {inStock ? 'В наявності' : 'Немає в наявності'}
           </span>
 
+          <AddToCartButton productId={product.id} disabled={!inStock} />
+
           {product.description && (
             <div className="border-t border-gray-100 pt-4">
               <h2 className="mb-2 text-sm font-semibold text-gray-900">
@@ -101,6 +104,49 @@ export function ProductDetail() {
         </div>
       </div>
     </div>
+  )
+}
+
+function AddToCartButton({
+  productId,
+  disabled,
+}: {
+  productId: number
+  disabled: boolean
+}) {
+  const { addToCart, isAdding } = useCart()
+  const [added, setAdded] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
+
+  const handleClick = () => {
+    addToCart(productId)
+      .then(() => {
+        setAdded(true)
+        if (timerRef.current) clearTimeout(timerRef.current)
+        timerRef.current = setTimeout(() => setAdded(false), 2000)
+      })
+      .catch(() => {
+        /* keep the button in its normal state on failure */
+      })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled || isAdding}
+      className={`w-fit rounded-md px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+        added ? 'bg-green-600' : 'bg-gray-900 hover:bg-gray-700'
+      }`}
+    >
+      {disabled ? 'Немає в наявності' : added ? 'Додано!' : 'У кошик'}
+    </button>
   )
 }
 

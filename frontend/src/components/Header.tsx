@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
+import { useCart } from '../hooks/useCart'
 import { SearchBar } from './SearchBar'
 
 export function Header() {
+  const { totalQuantity } = useCart()
+
   return (
     <header className="sticky top-0 z-[60] border-b border-gray-100 bg-white shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3">
@@ -35,7 +38,7 @@ export function Header() {
             <circle cx="20" cy="21" r="1" />
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
-          <span>Кошик (0)</span>
+          <span>Кошик ({totalQuantity})</span>
         </button>
       </div>
     </header>
