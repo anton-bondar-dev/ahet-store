@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.core',
     'apps.catalog',
+    'apps.cart',
 ]
 
 MIDDLEWARE = [
@@ -67,6 +68,11 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
 ]
+
+# Allow the anonymous-cart session header on cross-origin (preflighted) requests.
+from corsheaders.defaults import default_headers  # noqa: E402
+
+CORS_ALLOW_HEADERS = (*default_headers, 'x-session-id')
 
 ROOT_URLCONF = 'config.urls'
 
