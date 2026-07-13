@@ -2,6 +2,8 @@ import { Route, Routes } from 'react-router-dom'
 import App from '../App'
 import { useCartUI } from '../hooks/useCartUI'
 import { CartPage } from '../pages/CartPage'
+import { CheckoutPage } from '../pages/CheckoutPage'
+import { OrderSuccessPage } from '../pages/OrderSuccessPage'
 import { ProductDetail } from '../pages/ProductDetail'
 import { Header } from './Header'
 
@@ -21,6 +23,8 @@ export function AppShell() {
         <Route path="/" element={<App />} />
         <Route path="/product/:slug" element={<ProductDetail />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/order-success/:id" element={<OrderSuccessPage />} />
       </Routes>
     </div>
   )
