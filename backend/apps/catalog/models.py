@@ -41,3 +41,11 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def effective_price(self):
+        # Price actually charged: the discount price during an active sale,
+        # otherwise the regular price.
+        if self.discount_price is not None and self.is_active:
+            return self.discount_price
+        return self.price
