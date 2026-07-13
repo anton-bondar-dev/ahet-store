@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
+import { useCartUI } from '../hooks/useCartUI'
 import { useCart } from '../hooks/useCart'
 import { SearchBar } from './SearchBar'
 
 export function Header() {
   const { totalQuantity } = useCart()
+  const { openDrawer } = useCartUI()
 
   return (
     <header className="sticky top-0 z-[60] border-b border-gray-100 bg-white shadow-sm">
@@ -19,9 +21,10 @@ export function Header() {
         {/* Search with autocomplete + history */}
         <SearchBar />
 
-        {/* Cart placeholder */}
+        {/* Cart — opens the mini-cart drawer */}
         <button
           type="button"
+          onClick={openDrawer}
           className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
         >
           <svg
