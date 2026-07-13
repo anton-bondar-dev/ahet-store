@@ -11,6 +11,10 @@ class AddToCartIn(Schema):
     quantity: int = 1
 
 
+class UpdateQuantityIn(Schema):
+    quantity: int
+
+
 class CartItemOut(Schema):
     id: int
     product: ProductOut

@@ -8,7 +8,7 @@ from ninja.errors import HttpError
 from apps.catalog.models import Product
 
 from .models import Cart, CartItem
-from .schemas import AddToCartIn, CartOut
+from .schemas import AddToCartIn, CartOut, UpdateQuantityIn
 
 router = Router(tags=["cart"])
 
@@ -18,12 +18,6 @@ SESSION_HEADER = "X-Session-Id"
 def get_session_id(request) -> Optional[str]:
     sid = request.headers.get(SESSION_HEADER)
     return sid.strip() if sid and sid.strip() else None
-
-
-def effective_price(product) -> Decimal:
-    if product.discount_price is not None and product.is_active:
-        return product.discount_price
-    return product.price
 
 
 def serialize_cart(cart: Optional[Cart]) -> dict:
@@ -36,9 +30,12 @@ def serialize_cart(cart: Optional[Cart]) -> dict:
     total_quantity = 0
     total_price = Decimal("0.00")
     for item in cart.items.all():
+        # All rows are returned (incl. quantity 0 so the drawer can show them),
+        # but only quantity > 0 rows count toward the totals / header badge.
         items.append({"id": item.id, "product": item.product, "quantity": item.quantity})
-        total_quantity += item.quantity
-        total_price += effective_price(item.product) * item.quantity
+        if item.quantity > 0:
+            total_quantity += item.quantity
+            total_price += item.product.effective_price * item.quantity
 
     return {"items": items, "total_quantity": total_quantity, "total_price": total_price}
 
@@ -70,5 +67,31 @@ def add_to_cart(request, payload: AddToCartIn):
     item, created = CartItem.objects.get_or_create(cart=cart, product=product)
     item.quantity = (0 if created else item.quantity) + max(1, payload.quantity)
     item.save()
+
+    return serialize_cart(load_cart(sid))
+
+
+@router.patch("/{item_id}", response=CartOut, operation_id="update_cart_item")
+def update_cart_item(request, item_id: int, payload: UpdateQuantityIn):
+    sid = get_session_id(request)
+    if not sid:
+        raise HttpError(400, "Missing X-Session-Id header")
+
+    item = get_object_or_404(CartItem, id=item_id, cart__session_id=sid)
+    # 0 is allowed (item stays but drops out of totals); cap at available stock.
+    item.quantity = max(0, min(payload.quantity, item.product.stock))
+    item.save()
+
+    return serialize_cart(load_cart(sid))
+
+
+@router.delete("/{item_id}", response=CartOut, operation_id="delete_cart_item")
+def delete_cart_item(request, item_id: int):
+    sid = get_session_id(request)
+    if not sid:
+        raise HttpError(400, "Missing X-Session-Id header")
+
+    item = get_object_or_404(CartItem, id=item_id, cart__session_id=sid)
+    item.delete()
 
     return serialize_cart(load_cart(sid))

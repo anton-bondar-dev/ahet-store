@@ -32,7 +32,8 @@ import type {
 
 import type {
   AddToCartIn,
-  CartOut
+  CartOut,
+  UpdateQuantityIn
 } from '../onlineStoreAPI.schemas';
 
 
@@ -204,4 +205,126 @@ export const useAddToCart = <TError = AxiosError<unknown>,
         TContext
       > => {
       return useMutation(getAddToCartMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Update Cart Item
+ */
+export const updateCartItem = (
+    itemId: number,
+    updateQuantityIn: UpdateQuantityIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CartOut>> => {
+
+
+    return axios.default.patch(
+      `/api/cart/${itemId}`,
+      updateQuantityIn,options
+    );
+  }
+
+
+
+
+export const getUpdateCartItemMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCartItem>>, TError,{itemId: number;data: UpdateQuantityIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCartItem>>, TError,{itemId: number;data: UpdateQuantityIn}, TContext> => {
+
+const mutationKey = ['updateCartItem'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCartItem>>, {itemId: number;data: UpdateQuantityIn}> = (props) => {
+          const {itemId,data} = props ?? {};
+
+          return  updateCartItem(itemId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCartItemMutationResult = NonNullable<Awaited<ReturnType<typeof updateCartItem>>>
+    export type UpdateCartItemMutationBody = UpdateQuantityIn
+    export type UpdateCartItemMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Update Cart Item
+ */
+export const useUpdateCartItem = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCartItem>>, TError,{itemId: number;data: UpdateQuantityIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateCartItem>>,
+        TError,
+        {itemId: number;data: UpdateQuantityIn},
+        TContext
+      > => {
+      return useMutation(getUpdateCartItemMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete Cart Item
+ */
+export const deleteCartItem = (
+    itemId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CartOut>> => {
+
+
+    return axios.default.delete(
+      `/api/cart/${itemId}`,options
+    );
+  }
+
+
+
+
+export const getDeleteCartItemMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCartItem>>, TError,{itemId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCartItem>>, TError,{itemId: number}, TContext> => {
+
+const mutationKey = ['deleteCartItem'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCartItem>>, {itemId: number}> = (props) => {
+          const {itemId} = props ?? {};
+
+          return  deleteCartItem(itemId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCartItemMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCartItem>>>
+
+    export type DeleteCartItemMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Delete Cart Item
+ */
+export const useDeleteCartItem = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCartItem>>, TError,{itemId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCartItem>>,
+        TError,
+        {itemId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteCartItemMutationOptions(options), queryClient);
     }

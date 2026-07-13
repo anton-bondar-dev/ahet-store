@@ -54,6 +54,39 @@ export interface AddToCartIn {
   quantity?: number;
 }
 
+export interface UpdateQuantityIn {
+  quantity: number;
+}
+
+export interface OrderCreatedOut {
+  id: number;
+}
+
+export interface CheckoutIn {
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  city: string;
+  address: string;
+}
+
+export interface OrderItemOut {
+  product_title: string;
+  quantity: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  price: string;
+}
+
+export interface OrderOut {
+  id: number;
+  status: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_price: string;
+  created_at: string;
+  items: OrderItemOut[];
+}
+
 export type ListProductsParams = {
 q?: string | null;
 };
