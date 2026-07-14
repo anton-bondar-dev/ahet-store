@@ -14,7 +14,7 @@ from ninja_jwt.tokens import RefreshToken
 
 from apps.cart.services import get_session_id, merge_anonymous_cart
 
-from .email import send_email_otp
+from .email import send_email_otp, send_login_alert_async
 from .google import get_or_create_google_user, verify_google_token
 from .models import LoginChallenge, Profile, TelegramLinkToken
 from .schemas import (
@@ -47,10 +47,15 @@ def _issue_tokens(user: User):
     return str(refresh.access_token), str(refresh)
 
 
-def _authed(request, user: User, session_id):
+def _authed(request, user: User, session_id, notify: bool = True):
     # Fold any anonymous cart into the user's cart at the moment tokens are issued.
     merge_anonymous_cart(user, session_id)
     access, refresh = _issue_tokens(user)
+    # Security "new login" alert — sent in the background so it never delays the
+    # response. Covers password login, Google, and post-2FA (Telegram / email OTP);
+    # skipped on register (that's a new account, not a new login).
+    if notify:
+        send_login_alert_async(user.email, user.username)
     return {"status": "authed", "access": access, "refresh": refresh, "user": user}
 
 
@@ -62,7 +67,7 @@ def register(request, payload: RegisterIn):
         username=payload.username, email=payload.email, password=payload.password
     )
     Profile.objects.create(user=user)
-    return _authed(request, user, get_session_id(request))
+    return _authed(request, user, get_session_id(request), notify=False)
 
 
 @router.post("/login", response=AuthResult, operation_id="login")
