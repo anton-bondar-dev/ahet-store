@@ -42,6 +42,10 @@ class Order(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_NEW)
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    # Bonus points credited to the buyer's account for this order (0 if anonymous).
+    bonus_earned = models.IntegerField(default=0)
+    # Bonus points spent on this order (1 bonus = 1 UAH); total_price is net of these.
+    applied_bonuses = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -7,6 +7,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja_jwt.authentication import JWTAuth
 
+from apps.accounts.models import Profile
 from apps.cart.services import auth_user, get_current_cart, get_session_id
 from apps.catalog.models import Product
 
@@ -85,8 +86,32 @@ def checkout(request, payload: CheckoutIn):
         OrderItem.objects.bulk_create(order_items)
         Product.objects.bulk_update(locked.values(), ["stock"])
 
-        order.total_price = total_price
-        order.save(update_fields=["total_price"])
+        # Bonuses: spend (capped) then earn — authenticated buyers only.
+        subtotal = total_price  # Σ effective_price × qty, before bonus
+        bonus_earned = sum(
+            locked[item.product_id].bonus_amount * item.quantity for item in items
+        )
+        applied = 0
+        if user is not None:
+            profile, _ = Profile.objects.get_or_create(user=user)
+            # Cap: 75% of the subtotal at ≥500 UAH, else 50%; and by the balance.
+            pct = Decimal("0.75") if subtotal >= 500 else Decimal("0.50")
+            max_applicable = int(subtotal * pct)  # floor → integer UAH
+            applied = max(
+                0, min(payload.applied_bonuses, max_applicable, profile.bonus_balance)
+            )
+            # No bonuses are earned on an order that spends bonuses.
+            if applied > 0:
+                bonus_earned = 0
+            profile.bonus_balance = profile.bonus_balance - applied + bonus_earned
+            profile.save(update_fields=["bonus_balance"])
+        else:
+            bonus_earned = 0
+
+        order.total_price = subtotal - applied  # amount actually due
+        order.bonus_earned = bonus_earned
+        order.applied_bonuses = applied
+        order.save(update_fields=["total_price", "bonus_earned", "applied_bonuses"])
 
         cart.items.all().delete()
 

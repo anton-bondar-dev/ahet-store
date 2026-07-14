@@ -12,6 +12,7 @@ class CheckoutIn(Schema):
     email: str
     city: str
     address: str
+    applied_bonuses: int = 0
 
 
 class OrderCreatedOut(Schema):
@@ -29,6 +30,8 @@ class OrderOut(Schema):
     status: str
     status_label: str
     total_price: Decimal
+    bonus_earned: int
+    applied_bonuses: int
     created_at: datetime
     items: List[OrderItemOut]
 
