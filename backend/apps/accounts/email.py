@@ -7,6 +7,14 @@ from django.utils import timezone
 
 logger = logging.getLogger("accounts.email")
 
+# Dummy test domains — never actually sent to (avoids Gmail delivery-failure
+# bounces that hurt SMTP reputation).
+DUMMY_DOMAINS = ("@example.com", "@test.com")
+
+
+def _is_dummy(email: str) -> bool:
+    return (email or "").lower().endswith(DUMMY_DOMAINS)
+
 
 def send_login_alert(email: str, username: str) -> None:
     """Send a 'new login' security alert. Called on a background thread so it
@@ -24,6 +32,9 @@ def send_login_alert(email: str, username: str) -> None:
         f"Якщо ні — негайно змініть пароль та зверніться до підтримки."
     )
     logger.info("Sending login alert to %s …", email)
+    if _is_dummy(email):
+        logger.info("Skipping real send to dummy recipient %s (login alert).", email)
+        return
     try:
         # fail_silently=False so a real SMTP error is caught and logged here
         # (rather than silently swallowed on the background thread).
@@ -53,7 +64,13 @@ def send_email_otp(user, code: str) -> None:
         f"Ваш код підтвердження для входу в Ahet Store: {code}\n\n"
         f"Код дійсний 2 хвилини. Якщо ви не намагалися увійти, проігноруйте цей лист."
     )
+    # Always print the raw code so it can be grabbed from the terminal in dev,
+    # even when email delivery is slow/filtered.
+    logger.info("DEVELOPMENT ONLY - OTP CODE: %s", code)
     logger.info("2FA OTP: sending login code to %s", user.email)
+    if _is_dummy(user.email):
+        logger.info("Skipping real send to dummy recipient %s (OTP).", user.email)
+        return
     try:
         # fail_silently=False so a real SMTP error is logged, not swallowed.
         send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
