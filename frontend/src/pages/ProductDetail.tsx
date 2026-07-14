@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useGetProduct } from '../api/generated/catalog/catalog'
 import { productImageUrl } from '../api/http'
+import { ReviewsSection } from '../components/reviews/ReviewsSection'
 import { useCart } from '../hooks/useCart'
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
 import { formatPrice } from '../lib/format'
@@ -115,6 +116,13 @@ export function ProductDetail() {
           )}
         </div>
       </div>
+
+      <ReviewsSection
+        productId={product.id}
+        slug={product.slug}
+        averageRating={product.average_rating}
+        reviewsCount={product.reviews_count}
+      />
     </div>
   )
 }
