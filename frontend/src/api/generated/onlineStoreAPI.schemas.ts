@@ -31,6 +31,8 @@ export interface ProductOut {
   image: string | null;
   average_rating: number;
   reviews_count: number;
+  is_new: boolean;
+  bonus_amount: number;
 }
 
 export interface SuggestionOut {
@@ -103,6 +105,8 @@ export interface OrderOut {
   status_label: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_price: string;
+  bonus_earned: number;
+  applied_bonuses: number;
   created_at: string;
   items: OrderItemOut[];
 }
@@ -118,6 +122,7 @@ export interface CheckoutIn {
   email: string;
   city: string;
   address: string;
+  applied_bonuses?: number;
 }
 
 export interface UserOut {
@@ -181,6 +186,7 @@ export interface LinkStatusOut {
 }
 
 export interface ProfileOut {
+  username: string;
   first_name: string;
   last_name: string;
   phone_number: string;
@@ -191,6 +197,7 @@ export interface ProfileOut {
 }
 
 export interface ProfileIn {
+  username?: string;
   first_name?: string;
   last_name?: string;
   phone_number?: string;
