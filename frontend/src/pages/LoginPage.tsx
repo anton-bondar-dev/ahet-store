@@ -241,13 +241,21 @@ function EmailOtpScreen({
         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-2xl">
           ✉️
         </div>
-        <h1 className="text-xl font-bold text-gray-900">Введіть код з email</h1>
+        <h1 className="text-xl font-bold text-gray-900">
+          Введіть код підтвердження
+        </h1>
         <p className="mt-2 text-sm text-gray-500">
-          Ми надіслали 6-значний код на вашу пошту. Введіть його нижче.
+          Ми надіслали 6-значний код на вашу електронну пошту. Введіть його нижче,
+          щоб завершити вхід.
         </p>
 
         <form onSubmit={handleVerify} className="mt-6 flex flex-col items-center gap-4">
+          <label className="text-xs font-medium text-gray-500" htmlFor="otp-input">
+            Код з email
+          </label>
           <input
+            id="otp-input"
+            autoFocus
             inputMode="numeric"
             autoComplete="one-time-code"
             maxLength={6}
