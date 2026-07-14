@@ -53,10 +53,10 @@ def send_email_otp(user, code: str) -> None:
         f"Ваш код підтвердження для входу в Ahet Store: {code}\n\n"
         f"Код дійсний 2 хвилини. Якщо ви не намагалися увійти, проігноруйте цей лист."
     )
-    send_mail(
-        subject,
-        body,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=True,
-    )
+    logger.info("2FA OTP: sending login code to %s", user.email)
+    try:
+        # fail_silently=False so a real SMTP error is logged, not swallowed.
+        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+        logger.info("2FA OTP sent to %s.", user.email)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("2FA OTP FAILED for %s: %s: %s", user.email, type(exc).__name__, exc)
