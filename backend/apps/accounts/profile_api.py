@@ -1,5 +1,10 @@
+from typing import List
+
 from ninja import Router
 from ninja_jwt.authentication import JWTAuth
+
+from apps.reviews.models import Review
+from apps.reviews.schemas import MyReviewOut
 
 from .models import Profile
 from .schemas import ProfileIn, ProfileOut
@@ -38,3 +43,10 @@ def update_profile(request, payload: ProfileIn):
         update_fields=["first_name", "last_name", "phone_number", "city", "delivery_address"]
     )
     return serialize_profile(user)
+
+
+@router.get("/reviews", response=List[MyReviewOut], auth=JWTAuth(), operation_id="get_my_reviews")
+def get_my_reviews(request):
+    return list(
+        Review.objects.filter(user=request.auth).select_related("product")
+    )
