@@ -35,6 +35,10 @@ class Product(models.Model):
     discount_end_date = models.DateTimeField(blank=True, null=True)
     image = models.ImageField(upload_to="products/images/", blank=True, null=True)
 
+    # Denormalized review aggregates, recomputed from source on each review write.
+    average_rating = models.FloatField(default=0)
+    reviews_count = models.IntegerField(default=0)
+
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"
@@ -42,6 +46,14 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+
+    def recompute_rating(self):
+        from django.db.models import Avg, Count
+
+        agg = self.reviews.aggregate(a=Avg("rating"), c=Count("id"))
+        self.average_rating = round(agg["a"] or 0, 2)
+        self.reviews_count = agg["c"]
+        self.save(update_fields=["average_rating", "reviews_count"])
 
     @property
     def effective_price(self):

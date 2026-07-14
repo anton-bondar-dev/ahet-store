@@ -30,6 +30,8 @@ class ProductOut(Schema):
     discount_price: Optional[Decimal]
     discount_end_date: Optional[datetime]
     image: Optional[str]
+    average_rating: float
+    reviews_count: int
 
     @staticmethod
     def resolve_image(obj):
