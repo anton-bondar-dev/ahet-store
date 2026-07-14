@@ -56,6 +56,96 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
+ * @summary Get My Orders
+ */
+export const getMyOrders = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OrderOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/orders/me`,options
+    );
+  }
+
+
+
+
+export const getGetMyOrdersQueryKey = () => {
+    return [
+    `/api/orders/me`
+    ] as const;
+    }
+
+
+export const getGetMyOrdersQueryOptions = <TData = Awaited<ReturnType<typeof getMyOrders>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOrders>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyOrdersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyOrders>>> = ({ signal }) => getMyOrders({ signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyOrders>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyOrdersQueryResult = NonNullable<Awaited<ReturnType<typeof getMyOrders>>>
+export type GetMyOrdersQueryError = AxiosError<unknown>
+
+
+export function useGetMyOrders<TData = Awaited<ReturnType<typeof getMyOrders>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOrders>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyOrders>>,
+          TError,
+          Awaited<ReturnType<typeof getMyOrders>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyOrders<TData = Awaited<ReturnType<typeof getMyOrders>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOrders>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyOrders>>,
+          TError,
+          Awaited<ReturnType<typeof getMyOrders>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyOrders<TData = Awaited<ReturnType<typeof getMyOrders>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOrders>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get My Orders
+ */
+
+export function useGetMyOrders<TData = Awaited<ReturnType<typeof getMyOrders>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyOrders>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyOrdersQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
  * @summary Checkout
  */
 export const checkout = (

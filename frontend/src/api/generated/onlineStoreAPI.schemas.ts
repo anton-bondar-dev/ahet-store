@@ -36,6 +36,10 @@ export interface SuggestionOut {
   type: string;
 }
 
+export interface ViewIn {
+  product_id: number;
+}
+
 export interface CartItemOut {
   id: number;
   product: ProductOut;
@@ -58,6 +62,23 @@ export interface UpdateQuantityIn {
   quantity: number;
 }
 
+export interface OrderItemOut {
+  product_title: string;
+  quantity: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  price: string;
+}
+
+export interface OrderOut {
+  id: number;
+  status: string;
+  status_label: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_price: string;
+  created_at: string;
+  items: OrderItemOut[];
+}
+
 export interface OrderCreatedOut {
   id: number;
 }
@@ -71,20 +92,82 @@ export interface CheckoutIn {
   address: string;
 }
 
-export interface OrderItemOut {
-  product_title: string;
-  quantity: number;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  price: string;
+export interface UserOut {
+  id: number;
+  username: string;
+  email: string;
+  is_2fa_enabled?: boolean;
+  preferred_2fa_method?: string;
+  telegram_linked?: boolean;
+  bonus_balance?: number;
 }
 
-export interface OrderOut {
-  id: number;
+export interface AuthResult {
   status: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  total_price: string;
-  created_at: string;
-  items: OrderItemOut[];
+  method?: string | null;
+  access?: string | null;
+  refresh?: string | null;
+  user?: UserOut | null;
+  challenge_id?: string | null;
+  match_code?: number | null;
+}
+
+export interface RegisterIn {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginIn {
+  username: string;
+  password: string;
+}
+
+export interface GoogleAuthIn {
+  credential: string;
+}
+
+export interface VerifyOtpIn {
+  code: string;
+}
+
+export interface Set2faMethodIn {
+  method: string;
+}
+
+export interface AccessOut {
+  access: string;
+}
+
+export interface RefreshIn {
+  refresh: string;
+}
+
+export interface TelegramLinkOut {
+  url: string;
+  token: string;
+}
+
+export interface LinkStatusOut {
+  linked: boolean;
+}
+
+export interface ProfileOut {
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  city: string;
+  delivery_address: string;
+  email: string;
+  bonus_balance: number;
+}
+
+export interface ProfileIn {
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  city?: string;
+  delivery_address?: string;
 }
 
 export type ListProductsParams = {
