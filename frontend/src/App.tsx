@@ -228,7 +228,7 @@ function AllProductsView({
           <div className="flex snap-x gap-6 overflow-x-auto overflow-y-hidden scrollbar-hide py-4">
             {items.map((product) => (
               <div key={product.id} className="w-64 shrink-0 snap-start">
-                <ProductCard product={product} variant="slider" />
+                <ProductCard product={product} />
               </div>
             ))}
           </div>

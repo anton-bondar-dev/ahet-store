@@ -17,3 +17,12 @@ export function effectivePrice(product: ProductOut): number {
   }
   return Number(product.price)
 }
+
+// Ukrainian plural for "відгук" (review): 1 відгук, 2 відгуки, 5 відгуків.
+export function reviewsPlural(n: number): string {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'відгук'
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'відгуки'
+  return 'відгуків'
+}
