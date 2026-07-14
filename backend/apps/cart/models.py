@@ -1,9 +1,14 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 
 class Cart(models.Model):
-    # Anonymous cart keyed by a client-generated session id (UUID string).
-    session_id = models.CharField(max_length=64, unique=True, db_index=True)
+    # Anonymous carts are keyed by a client session id; authenticated carts by
+    # user. Exactly one of the two identifies a cart at a time.
+    session_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, blank=True, null=True, related_name="carts"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -12,7 +17,7 @@ class Cart(models.Model):
         verbose_name_plural = "Carts"
 
     def __str__(self):
-        return f"Cart {self.session_id}"
+        return f"Cart {self.user_id or self.session_id}"
 
 
 class CartItem(models.Model):
