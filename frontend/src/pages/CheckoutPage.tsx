@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
+import { getProfile } from '../api/generated/accounts/accounts'
 import { getGetCartQueryKey } from '../api/generated/cart/cart'
 import { useCheckout } from '../api/generated/orders/orders'
 import { productImageUrl } from '../api/http'
+import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
 import { effectivePrice, formatPrice } from '../lib/format'
 
@@ -29,10 +31,35 @@ export function CheckoutPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { items, totalQuantity, totalPrice } = useCart()
+  const { user } = useAuth()
   const checkout = useCheckout()
 
   const [form, setForm] = useState<Form>(EMPTY)
   const [error, setError] = useState<string | null>(null)
+
+  // Pre-fill from the saved profile for logged-in buyers — without clobbering
+  // anything they've already typed.
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    getProfile()
+      .then((res) => {
+        if (!active) return
+        const p = res.data
+        setForm((prev) => ({
+          first_name: prev.first_name || p.first_name,
+          last_name: prev.last_name || p.last_name,
+          phone: prev.phone || p.phone_number,
+          email: prev.email || p.email,
+          city: prev.city || p.city,
+          address: prev.address || p.delivery_address,
+        }))
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [user])
 
   const activeItems = items.filter((item) => item.quantity > 0)
 

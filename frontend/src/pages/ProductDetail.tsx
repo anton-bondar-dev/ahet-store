@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useGetProduct } from '../api/generated/catalog/catalog'
 import { productImageUrl } from '../api/http'
 import { useCart } from '../hooks/useCart'
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
 import { formatPrice } from '../lib/format'
 
 type Crumb = { label: string; to?: string; node?: ReactNode }
@@ -14,6 +15,17 @@ export function ProductDetail() {
   })
 
   const product = data?.data
+  const { record } = useRecentlyViewed()
+  const recordedId = useRef<number | null>(null)
+
+  // Record the view once per product (logged-in → backend, else localStorage).
+  const productId = product?.id
+  useEffect(() => {
+    if (productId && recordedId.current !== productId) {
+      recordedId.current = productId
+      record(productId)
+    }
+  }, [productId, record])
 
   if (isLoading) {
     return <p className="p-6 text-gray-500">Завантаження товару…</p>
