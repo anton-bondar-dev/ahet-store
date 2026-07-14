@@ -67,6 +67,7 @@ class GoogleAuthIn(Schema):
 
 
 class ProfileIn(Schema):
+    username: str = ""
     first_name: str = ""
     last_name: str = ""
     phone_number: str = ""
@@ -75,6 +76,7 @@ class ProfileIn(Schema):
 
 
 class ProfileOut(Schema):
+    username: str
     first_name: str
     last_name: str
     phone_number: str
