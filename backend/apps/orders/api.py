@@ -1,12 +1,13 @@
 from decimal import Decimal
-from typing import Optional
+from typing import List
 
-from django.db import transaction
+from django.db import models, transaction
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.errors import HttpError
+from ninja_jwt.authentication import JWTAuth
 
-from apps.cart.models import Cart
+from apps.cart.services import auth_user, get_current_cart, get_session_id
 from apps.catalog.models import Product
 
 from .models import Order, OrderItem
@@ -14,24 +15,23 @@ from .schemas import CheckoutIn, OrderCreatedOut, OrderOut
 
 router = Router(tags=["orders"])
 
-SESSION_HEADER = "X-Session-Id"
 
-
-def get_session_id(request) -> Optional[str]:
-    sid = request.headers.get(SESSION_HEADER)
-    return sid.strip() if sid and sid.strip() else None
+@router.get("/me", response=List[OrderOut], auth=JWTAuth(), operation_id="get_my_orders")
+def get_my_orders(request):
+    return list(
+        Order.objects.filter(user=request.auth).prefetch_related("items")
+    )
 
 
 @router.post("/checkout", response=OrderCreatedOut, operation_id="checkout")
 def checkout(request, payload: CheckoutIn):
+    user = auth_user(request)
     sid = get_session_id(request)
-    if not sid:
-        raise HttpError(400, "Missing X-Session-Id header")
 
     # Everything runs in one atomic block: stock validation, order creation,
     # stock decrement, and cart clearing either all commit or all roll back.
     with transaction.atomic():
-        cart = Cart.objects.filter(session_id=sid).first()
+        cart = get_current_cart(request)
         items = (
             list(cart.items.filter(quantity__gt=0).select_related("product"))
             if cart
@@ -56,6 +56,7 @@ def checkout(request, payload: CheckoutIn):
 
         order = Order.objects.create(
             session_id=sid,
+            user=user,
             first_name=payload.first_name,
             last_name=payload.last_name,
             phone=payload.phone,
@@ -94,10 +95,19 @@ def checkout(request, payload: CheckoutIn):
 
 @router.get("/{order_id}", response=OrderOut, operation_id="get_order")
 def get_order(request, order_id: int):
+    # An order is visible to its owner — the authenticated user, or the session
+    # that placed it (so the success page works for anonymous checkout too).
+    user = auth_user(request)
     sid = get_session_id(request)
-    if not sid:
-        raise HttpError(400, "Missing X-Session-Id header")
+    owner = models.Q()
+    if user is not None:
+        owner |= models.Q(user=user)
+    if sid:
+        owner |= models.Q(session_id=sid)
+    if not owner:
+        raise HttpError(400, "Missing identity")
+
     order = get_object_or_404(
-        Order.objects.prefetch_related("items"), id=order_id, session_id=sid
+        Order.objects.prefetch_related("items"), owner, id=order_id
     )
     return order

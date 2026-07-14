@@ -27,6 +27,14 @@ class OrderItemOut(Schema):
 class OrderOut(Schema):
     id: int
     status: str
+    status_label: str
     total_price: Decimal
     created_at: datetime
     items: List[OrderItemOut]
+
+    @staticmethod
+    def resolve_status_label(obj):
+        from .models import STATUS_LABELS_UK
+
+        status = obj["status"] if isinstance(obj, dict) else obj.status
+        return STATUS_LABELS_UK.get(status, status)
