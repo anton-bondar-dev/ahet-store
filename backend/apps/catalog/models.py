@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 
@@ -49,3 +50,18 @@ class Product(models.Model):
         if self.discount_price is not None and self.is_active:
             return self.discount_price
         return self.price
+
+
+class RecentlyViewed(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recently_viewed")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    viewed_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Recently viewed"
+        verbose_name_plural = "Recently viewed"
+        unique_together = ("user", "product")
+        ordering = ["-viewed_at"]
+
+    def __str__(self):
+        return f"{self.user_id} viewed {self.product_id}"
