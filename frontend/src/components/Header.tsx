@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 import { useCartUI } from '../hooks/useCartUI'
 import { useCart } from '../hooks/useCart'
 import { SearchBar } from './SearchBar'
@@ -6,6 +7,7 @@ import { SearchBar } from './SearchBar'
 export function Header() {
   const { totalQuantity } = useCart()
   const { openDrawer } = useCartUI()
+  const { user } = useAuth()
 
   return (
     <header className="sticky top-0 z-[60] border-b border-gray-100 bg-white shadow-sm">
@@ -15,7 +17,7 @@ export function Header() {
           to="/"
           className="shrink-0 text-xl font-bold text-gray-900 transition hover:text-gray-600"
         >
-          Магазин
+          Ahet Store
         </Link>
 
         {/* Search with autocomplete + history */}
@@ -43,6 +45,36 @@ export function Header() {
           </svg>
           <span>Кошик ({totalQuantity})</span>
         </button>
+
+        {/* Auth state */}
+        {user ? (
+          <Link
+            to="/account"
+            className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
+          >
+            <svg
+              className="h-5 w-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span className="max-w-[8rem] truncate">{user.username}</span>
+          </Link>
+        ) : (
+          <Link
+            to="/login"
+            className="shrink-0 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
+          >
+            Увійти
+          </Link>
+        )}
       </div>
     </header>
   )

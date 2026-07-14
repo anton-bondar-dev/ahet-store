@@ -6,6 +6,7 @@ import './api/http' // side-effect: sets axios baseURL before any request
 import './index.css'
 import { AppShell } from './components/AppShell.tsx'
 import { CartDrawer } from './components/CartDrawer.tsx'
+import { AuthProvider } from './context/AuthContext.tsx'
 import { CartUIProvider } from './context/CartUIContext.tsx'
 
 const queryClient = new QueryClient()
@@ -13,12 +14,14 @@ const queryClient = new QueryClient()
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <CartUIProvider>
-          <AppShell />
-          <CartDrawer />
-        </CartUIProvider>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <CartUIProvider>
+            <AppShell />
+            <CartDrawer />
+          </CartUIProvider>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 )
