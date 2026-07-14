@@ -36,6 +36,9 @@ def send_login_alert(email: str, username: str) -> None:
 def send_login_alert_async(email: str, username: str) -> None:
     """Fire-and-forget the login alert. Primitive args (not the ORM object) so
     the worker thread touches no DB connection."""
+    # Logged on the request thread (synchronous) so it always shows in the
+    # console — proving the login hook fired, independent of the email thread.
+    logger.info("LOGIN ALERT: spawning email thread for user '%s' <%s>", username, email)
     threading.Thread(
         target=send_login_alert, args=(email, username), daemon=True
     ).start()
