@@ -31,6 +31,7 @@ import type {
 } from 'axios';
 
 import type {
+  MyReviewOut,
   ProfileIn,
   ProfileOut
 } from '../onlineStoreAPI.schemas';
@@ -205,3 +206,93 @@ export const useUpdateProfile = <TError = AxiosError<unknown>,
       > => {
       return useMutation(getUpdateProfileMutationOptions(options), queryClient);
     }
+    /**
+ * @summary Get My Reviews
+ */
+export const getMyReviews = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<MyReviewOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/accounts/reviews`,options
+    );
+  }
+
+
+
+
+export const getGetMyReviewsQueryKey = () => {
+    return [
+    `/api/accounts/reviews`
+    ] as const;
+    }
+
+
+export const getGetMyReviewsQueryOptions = <TData = Awaited<ReturnType<typeof getMyReviews>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyReviews>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyReviewsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyReviews>>> = ({ signal }) => getMyReviews({ signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyReviews>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyReviewsQueryResult = NonNullable<Awaited<ReturnType<typeof getMyReviews>>>
+export type GetMyReviewsQueryError = AxiosError<unknown>
+
+
+export function useGetMyReviews<TData = Awaited<ReturnType<typeof getMyReviews>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyReviews>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyReviews>>,
+          TError,
+          Awaited<ReturnType<typeof getMyReviews>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyReviews<TData = Awaited<ReturnType<typeof getMyReviews>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyReviews>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyReviews>>,
+          TError,
+          Awaited<ReturnType<typeof getMyReviews>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyReviews<TData = Awaited<ReturnType<typeof getMyReviews>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyReviews>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get My Reviews
+ */
+
+export function useGetMyReviews<TData = Awaited<ReturnType<typeof getMyReviews>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyReviews>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyReviewsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+

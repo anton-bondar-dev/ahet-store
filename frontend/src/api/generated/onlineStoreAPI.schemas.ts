@@ -29,6 +29,8 @@ export interface ProductOut {
   discount_price: string | null;
   discount_end_date: string | null;
   image: string | null;
+  average_rating: number;
+  reviews_count: number;
 }
 
 export interface SuggestionOut {
@@ -38,6 +40,32 @@ export interface SuggestionOut {
 
 export interface ViewIn {
   product_id: number;
+}
+
+export interface ReviewReplyOut {
+  id: number;
+  author_name: string;
+  is_admin: boolean;
+  text: string;
+  created_at: string;
+}
+
+export interface ReplyIn {
+  text: string;
+}
+
+export interface ReviewOut {
+  id: number;
+  author_name: string;
+  rating: number;
+  text: string;
+  created_at: string;
+  replies: ReviewReplyOut[];
+}
+
+export interface ReviewIn {
+  rating: number;
+  text?: string;
 }
 
 export interface CartItemOut {
@@ -168,6 +196,15 @@ export interface ProfileIn {
   phone_number?: string;
   city?: string;
   delivery_address?: string;
+}
+
+export interface MyReviewOut {
+  id: number;
+  product_title: string;
+  product_slug: string;
+  rating: number;
+  text: string;
+  created_at: string;
 }
 
 export type ListProductsParams = {
