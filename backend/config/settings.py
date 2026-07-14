@@ -21,6 +21,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from backend/.env (if present).
 load_dotenv(BASE_DIR / ".env")
 
+# Point OpenSSL at a real CA bundle. macOS/Homebrew Python often ships without
+# one, causing "SSL: CERTIFICATE_VERIFY_FAILED — unable to get local issuer
+# certificate" on outbound TLS (Gmail SMTP, Google, Telegram). Set before any
+# SSL context is created so ssl.create_default_context() (used by Django's SMTP
+# backend) can verify certificates.
+import certifi  # noqa: E402
+
+os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -99,10 +109,20 @@ TELEGRAM_INSECURE_SKIP_TLS_VERIFY = os.environ.get(
     'TELEGRAM_INSECURE_SKIP_TLS_VERIFY', ''
 ).lower() in ('1', 'true', 'yes')
 
-# Email — console backend for dev (OTP codes print to the runserver terminal).
-# Swap to an SMTP backend + credentials for production.
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'Ahet Store <no-reply@ahet.store>'
+# Email — real SMTP (Gmail) when credentials are present, else console for dev.
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in ('1', 'true', 'yes')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'Ahet Store <no-reply@ahet.store>'
+# Fall back to the console backend when no SMTP user is configured, so local
+# dev never crashes on send (emails print to the runserver terminal instead).
+EMAIL_BACKEND = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if EMAIL_HOST_USER
+    else 'django.core.mail.backends.console.EmailBackend'
+)
 
 # Google Sign-In: only the Client ID is needed server-side (to verify the ID
 # token's audience). Set GOOGLE_CLIENT_ID in .env.
