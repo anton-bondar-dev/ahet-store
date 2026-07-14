@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.catalog',
     'apps.cart',
     'apps.orders',
+    'apps.accounts',
 ]
 
 MIDDLEWARE = [
@@ -74,6 +75,49 @@ CORS_ALLOWED_ORIGINS = [
 from corsheaders.defaults import default_headers  # noqa: E402
 
 CORS_ALLOW_HEADERS = (*default_headers, 'x-session-id')
+
+# JWT (django-ninja-jwt). Tokens are minted manually at our own approval point
+# so the Telegram second factor gates issuance.
+from datetime import timedelta  # noqa: E402
+
+NINJA_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'ROTATE_REFRESH_TOKENS': True,
+}
+
+# Telegram bot used for tap-to-approve 2FA. Set TELEGRAM_BOT_TOKEN /
+# TELEGRAM_BOT_USERNAME in the environment to enable real pushes; without a
+# token the flow still works locally via the DEBUG-only dev-approve endpoint.
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourStoreBot')
+# DEBUG-only escape hatch: skip TLS verification for Telegram calls when a local
+# TLS-inspecting proxy / missing CA bundle causes CERTIFICATE_VERIFY_FAILED.
+# Never affects production (gated on DEBUG in telegram.call).
+TELEGRAM_INSECURE_SKIP_TLS_VERIFY = os.environ.get(
+    'TELEGRAM_INSECURE_SKIP_TLS_VERIFY', ''
+).lower() in ('1', 'true', 'yes')
+
+# Email — console backend for dev (OTP codes print to the runserver terminal).
+# Swap to an SMTP backend + credentials for production.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'Ahet Store <no-reply@ahet.store>'
+
+# Google Sign-In: only the Client ID is needed server-side (to verify the ID
+# token's audience). Set GOOGLE_CLIENT_ID in .env.
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+
+# Ensure our app loggers (e.g. accounts.google) print to the runserver console.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'loggers': {
+        'accounts': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+}
 
 ROOT_URLCONF = 'config.urls'
 
