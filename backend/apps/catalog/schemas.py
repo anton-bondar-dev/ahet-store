@@ -32,6 +32,8 @@ class ProductOut(Schema):
     image: Optional[str]
     average_rating: float
     reviews_count: int
+    is_new: bool
+    bonus_amount: int
 
     @staticmethod
     def resolve_image(obj):

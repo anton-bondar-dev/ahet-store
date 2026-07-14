@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
 
 
 class Category(models.Model):
@@ -39,6 +42,12 @@ class Product(models.Model):
     average_rating = models.FloatField(default=0)
     reviews_count = models.IntegerField(default=0)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    # Admin can suppress the "New" badge even within the 30-day window.
+    disable_new_badge = models.BooleanField(default=False)
+    # Admin override for the bonus points granted; falls back to 1% of price.
+    custom_bonus = models.IntegerField(null=True, blank=True)
+
     class Meta:
         verbose_name = "Product"
         verbose_name_plural = "Products"
@@ -46,6 +55,19 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+
+    @property
+    def is_new(self) -> bool:
+        if self.disable_new_badge or not self.created_at:
+            return False
+        return self.created_at >= timezone.now() - timedelta(days=30)
+
+    @property
+    def bonus_amount(self) -> int:
+        # Admin override wins; otherwise 1% of the effective (discounted) price.
+        if self.custom_bonus is not None:
+            return self.custom_bonus
+        return int(self.effective_price / 100)
 
     def recompute_rating(self):
         from django.db.models import Avg, Count
