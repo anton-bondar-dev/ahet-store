@@ -27,8 +27,24 @@ export function OrderSuccessPage() {
 
         {order && (
           <div className="mt-6 rounded-lg bg-gray-50 p-4 text-left text-sm">
+            {order.applied_bonuses > 0 && (
+              <>
+                <div className="flex justify-between py-1">
+                  <span className="text-gray-500">Сума</span>
+                  <span className="text-gray-900">
+                    {formatPrice(
+                      String(Number(order.total_price) + order.applied_bonuses),
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 text-amber-700">
+                  <span>Оплачено бонусами</span>
+                  <span>−{order.applied_bonuses}</span>
+                </div>
+              </>
+            )}
             <div className="flex justify-between py-1">
-              <span className="text-gray-500">Сума</span>
+              <span className="text-gray-500">До сплати</span>
               <span className="font-semibold text-gray-900">
                 {formatPrice(order.total_price)}
               </span>
@@ -37,7 +53,28 @@ export function OrderSuccessPage() {
               <span className="text-gray-500">Статус</span>
               <span className="text-gray-900">В обробці</span>
             </div>
+            {order.bonus_earned > 0 && (
+              <div className="flex justify-between py-1">
+                <span className="text-gray-500">Нараховано бонусів</span>
+                <span className="font-semibold text-amber-600">
+                  +{order.bonus_earned}
+                </span>
+              </div>
+            )}
           </div>
+        )}
+
+        {order && order.bonus_earned > 0 && (
+          <p className="mt-4 rounded-md bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
+            Нараховано {order.bonus_earned} бонусів на ваш рахунок!
+          </p>
+        )}
+
+        {order && order.applied_bonuses > 0 && (
+          <p className="mt-4 rounded-md bg-gray-50 px-4 py-2 text-sm text-gray-500">
+            Оскільки для цього замовлення були використані бонуси, нові бонуси не
+            нараховуються.
+          </p>
         )}
 
         <p className="mt-6 text-sm text-gray-500">

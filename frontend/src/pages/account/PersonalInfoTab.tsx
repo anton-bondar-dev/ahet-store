@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getProfile, updateProfile } from '../../api/generated/accounts/accounts'
+import { useAuth } from '../../hooks/useAuth'
 
 type Form = {
+  username: string
   first_name: string
   last_name: string
   phone_number: string
@@ -10,6 +12,7 @@ type Form = {
 }
 
 const EMPTY: Form = {
+  username: '',
   first_name: '',
   last_name: '',
   phone_number: '',
@@ -18,11 +21,13 @@ const EMPTY: Form = {
 }
 
 export function PersonalInfoTab() {
+  const { refreshUser } = useAuth()
   const [form, setForm] = useState<Form>(EMPTY)
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -31,6 +36,7 @@ export function PersonalInfoTab() {
         if (!active) return
         const d = res.data
         setForm({
+          username: d.username,
           first_name: d.first_name,
           last_name: d.last_name,
           phone_number: d.phone_number,
@@ -48,14 +54,19 @@ export function PersonalInfoTab() {
   const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }))
     setSaved(false)
+    setError(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
+    setError(null)
     try {
       await updateProfile(form)
       setSaved(true)
+      await refreshUser() // header / review author names reflect the new username
+    } catch {
+      setError('Не вдалося зберегти. Можливо, це ім’я користувача вже зайняте.')
     } finally {
       setSaving(false)
     }
@@ -72,10 +83,16 @@ export function PersonalInfoTab() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label="Ім'я користувача (логін)"
+            value={form.username}
+            onChange={set('username')}
+            required
+          />
+          <Field label="Email" value={email} disabled />
           <Field label="Ім'я" value={form.first_name} onChange={set('first_name')} />
           <Field label="Прізвище" value={form.last_name} onChange={set('last_name')} />
           <Field label="Телефон" value={form.phone_number} onChange={set('phone_number')} />
-          <Field label="Email" value={email} disabled />
           <Field label="Місто" value={form.city} onChange={set('city')} />
           <Field
             label="Відділення пошти / Адреса"
@@ -83,6 +100,8 @@ export function PersonalInfoTab() {
             onChange={set('delivery_address')}
           />
         </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div className="flex items-center gap-3">
           <button

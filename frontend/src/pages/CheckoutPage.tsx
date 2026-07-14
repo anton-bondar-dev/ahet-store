@@ -31,11 +31,12 @@ export function CheckoutPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { items, totalQuantity, totalPrice } = useCart()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const checkout = useCheckout()
 
   const [form, setForm] = useState<Form>(EMPTY)
   const [error, setError] = useState<string | null>(null)
+  const [applyBonuses, setApplyBonuses] = useState(false)
 
   // Pre-fill from the saved profile for logged-in buyers — without clobbering
   // anything they've already typed.
@@ -63,6 +64,21 @@ export function CheckoutPage() {
 
   const activeItems = items.filter((item) => item.quantity > 0)
 
+  // Bonus spending — mirrors the backend cap (which re-clamps authoritatively).
+  const subtotal = Number(totalPrice)
+  const balance = user?.bonus_balance ?? 0
+  const maxApplicable = Math.min(
+    Math.floor(subtotal * (subtotal >= 500 ? 0.75 : 0.5)),
+    balance,
+  )
+  const canUseBonuses = !!user && maxApplicable > 0
+  const appliedBonuses = canUseBonuses && applyBonuses ? maxApplicable : 0
+  const dueTotal = subtotal - appliedBonuses
+  const earnPreview = activeItems.reduce(
+    (sum, item) => sum + item.product.bonus_amount * item.quantity,
+    0,
+  )
+
   const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
@@ -84,9 +100,10 @@ export function CheckoutPage() {
     e.preventDefault()
     setError(null)
     checkout
-      .mutateAsync({ data: form })
+      .mutateAsync({ data: { ...form, applied_bonuses: appliedBonuses } })
       .then((response) => {
         queryClient.invalidateQueries({ queryKey: getGetCartQueryKey() })
+        refreshUser() // bonus balance just changed
         navigate(`/order-success/${response.data.id}`)
       })
       .catch(() => {
@@ -170,10 +187,74 @@ export function CheckoutPage() {
               })}
             </ul>
 
-            <div className="mb-4 flex items-baseline justify-between border-t border-gray-100 pt-4">
-              <span className="text-sm text-gray-500">Разом</span>
-              <span className="text-xl font-bold text-gray-900">{formatPrice(totalPrice)}</span>
+            {/* Use bonuses */}
+            {canUseBonuses && (
+              <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3">
+                <p className="text-sm font-semibold text-amber-800">
+                  Використати бонуси
+                </p>
+                <p className="mt-0.5 text-xs text-amber-700">
+                  Ваш баланс: {balance} · Можна списати до {maxApplicable}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setApplyBonuses((v) => !v)}
+                  className={`mt-2 w-full rounded-md px-3 py-1.5 text-sm font-semibold transition ${
+                    applyBonuses
+                      ? 'bg-white text-amber-800 ring-1 ring-amber-300 hover:bg-amber-100'
+                      : 'bg-amber-500 text-white hover:bg-amber-600'
+                  }`}
+                >
+                  {applyBonuses
+                    ? 'Скасувати'
+                    : `Списати ${maxApplicable} бонусів`}
+                </button>
+              </div>
+            )}
+
+            {/* Upsell hint */}
+            {subtotal < 500 && (
+              <p className="mb-4 rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
+                Додайте товарів ще на {formatPrice(String(500 - subtotal))}, щоб
+                мати можливість оплатити бонусами до 75% вартості!
+              </p>
+            )}
+
+            {/* Price breakdown */}
+            <div className="mb-4 border-t border-gray-100 pt-4 text-sm">
+              <div className="flex items-baseline justify-between py-0.5">
+                <span className="text-gray-500">Сума</span>
+                <span className="text-gray-900">{formatPrice(String(subtotal))}</span>
+              </div>
+              {appliedBonuses > 0 && (
+                <div className="flex items-baseline justify-between py-0.5 text-amber-700">
+                  <span>Оплачено бонусами</span>
+                  <span>−{appliedBonuses} грн</span>
+                </div>
+              )}
+              <div className="mt-1 flex items-baseline justify-between border-t border-gray-100 pt-2">
+                <span className="font-medium text-gray-700">До сплати</span>
+                <span className="text-xl font-bold text-gray-900">
+                  {formatPrice(String(dueTotal))}
+                </span>
+              </div>
             </div>
+
+            {/* Earned preview — bonuses aren't earned on an order that spends them */}
+            {appliedBonuses > 0 ? (
+              <p className="mb-4 text-xs text-gray-500">
+                За замовлення з оплатою бонусами нові бонуси не нараховуються.
+              </p>
+            ) : (
+              earnPreview > 0 && (
+                <p className="mb-4 text-xs text-gray-500">
+                  За це замовлення ви отримаєте:{' '}
+                  <span className="font-semibold text-amber-600">
+                    +{earnPreview} бонусів
+                  </span>
+                </p>
+              )
+            )}
 
             {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 

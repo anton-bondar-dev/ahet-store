@@ -42,7 +42,16 @@ function OrderCard({ order }: { order: OrderOut }) {
           <p className="font-semibold text-gray-900">Замовлення №{order.id}</p>
           <p className="text-xs text-gray-500">{date}</p>
         </div>
-        <p className="text-lg font-bold text-gray-900">{formatPrice(order.total_price)}</p>
+        <div className="text-right">
+          <p className="text-lg font-bold text-gray-900">
+            {formatPrice(order.total_price)}
+          </p>
+          {order.bonus_earned > 0 && (
+            <p className="text-xs font-medium text-amber-600">
+              +{order.bonus_earned} бонусів
+            </p>
+          )}
+        </div>
       </div>
 
       <ul className="mb-5 flex flex-col gap-1 text-sm text-gray-600">
