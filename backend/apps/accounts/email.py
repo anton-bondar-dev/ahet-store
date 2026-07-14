@@ -2,7 +2,7 @@ import logging
 import threading
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.utils import timezone
 
 logger = logging.getLogger("accounts.email")
@@ -14,6 +14,26 @@ DUMMY_DOMAINS = ("@example.com", "@test.com")
 
 def _is_dummy(email: str) -> bool:
     return (email or "").lower().endswith(DUMMY_DOMAINS)
+
+
+def _deliver(subject: str, body: str, recipient: str) -> None:
+    """Send one message with a Reply-To (Django adds a Message-ID + Date itself).
+    Skips dummy-domain recipients; logs success/failure instead of swallowing."""
+    if _is_dummy(recipient):
+        logger.info("Skipping real send to dummy recipient %s.", recipient)
+        return
+    reply_to = [settings.EMAIL_HOST_USER] if settings.EMAIL_HOST_USER else None
+    try:
+        EmailMessage(
+            subject=subject,
+            body=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[recipient],
+            reply_to=reply_to,
+        ).send(fail_silently=False)
+        logger.info("Email sent to %s: %s", recipient, subject)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Email FAILED for %s (%s): %s: %s", recipient, subject, type(exc).__name__, exc)
 
 
 def send_login_alert(email: str, username: str) -> None:
@@ -32,16 +52,7 @@ def send_login_alert(email: str, username: str) -> None:
         f"Якщо ні — негайно змініть пароль та зверніться до підтримки."
     )
     logger.info("Sending login alert to %s …", email)
-    if _is_dummy(email):
-        logger.info("Skipping real send to dummy recipient %s (login alert).", email)
-        return
-    try:
-        # fail_silently=False so a real SMTP error is caught and logged here
-        # (rather than silently swallowed on the background thread).
-        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
-        logger.info("Login alert sent to %s.", email)
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Login alert FAILED for %s: %s: %s", email, type(exc).__name__, exc)
+    _deliver(subject, body, email)
 
 
 def send_login_alert_async(email: str, username: str) -> None:
@@ -68,12 +79,4 @@ def send_email_otp(user, code: str) -> None:
     # even when email delivery is slow/filtered.
     logger.info("DEVELOPMENT ONLY - OTP CODE: %s", code)
     logger.info("2FA OTP: sending login code to %s", user.email)
-    if _is_dummy(user.email):
-        logger.info("Skipping real send to dummy recipient %s (OTP).", user.email)
-        return
-    try:
-        # fail_silently=False so a real SMTP error is logged, not swallowed.
-        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
-        logger.info("2FA OTP sent to %s.", user.email)
-    except Exception as exc:  # noqa: BLE001
-        logger.error("2FA OTP FAILED for %s: %s: %s", user.email, type(exc).__name__, exc)
+    _deliver(subject, body, user.email)

@@ -115,7 +115,11 @@ EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() in ('1', 'true', 'yes')
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'Ahet Store <no-reply@ahet.store>'
+# Friendly From name (Gmail keeps the authenticated address, just adds the label).
+DEFAULT_FROM_EMAIL = (
+    f"Ahet Store <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER
+    else 'Ahet Store <no-reply@ahet.store>'
+)
 # Fall back to the console backend when no SMTP user is configured, so local
 # dev never crashes on send (emails print to the runserver terminal instead).
 EMAIL_BACKEND = (
