@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { AxiosError } from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 import { getProfile } from '../api/generated/accounts/accounts'
@@ -30,7 +31,18 @@ const EMPTY: Form = {
 export function CheckoutPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { items, totalQuantity, totalPrice } = useCart()
+  const {
+    items,
+    totalQuantity,
+    totalPrice,
+    couponCode,
+    couponDiscount,
+    totalAfterDiscount,
+    applyCoupon,
+    removeCoupon,
+    isApplyingCoupon,
+    isRemovingCoupon,
+  } = useCart()
   const { user, refreshUser } = useAuth()
   const checkout = useCheckout()
 
@@ -65,15 +77,19 @@ export function CheckoutPage() {
   const activeItems = items.filter((item) => item.quantity > 0)
 
   // Bonus spending — mirrors the backend cap (which re-clamps authoritatively).
+  // The cap is computed on the POST-coupon amount, matching the checkout order
+  // of operations: subtotal → −coupon → bonus cap on the remainder.
   const subtotal = Number(totalPrice)
+  const discount = Number(couponDiscount)
+  const afterCoupon = Number(totalAfterDiscount)
   const balance = user?.bonus_balance ?? 0
   const maxApplicable = Math.min(
-    Math.floor(subtotal * (subtotal >= 500 ? 0.75 : 0.5)),
+    Math.floor(afterCoupon * (afterCoupon >= 500 ? 0.75 : 0.5)),
     balance,
   )
   const canUseBonuses = !!user && maxApplicable > 0
   const appliedBonuses = canUseBonuses && applyBonuses ? maxApplicable : 0
-  const dueTotal = subtotal - appliedBonuses
+  const dueTotal = afterCoupon - appliedBonuses
   const earnPreview = activeItems.reduce(
     (sum, item) => sum + item.product.bonus_amount * item.quantity,
     0,
@@ -187,6 +203,16 @@ export function CheckoutPage() {
               })}
             </ul>
 
+            {/* Promo code */}
+            <PromoCode
+              couponCode={couponCode}
+              discount={discount}
+              onApply={applyCoupon}
+              onRemove={removeCoupon}
+              isApplying={isApplyingCoupon}
+              isRemoving={isRemovingCoupon}
+            />
+
             {/* Use bonuses */}
             {canUseBonuses && (
               <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3">
@@ -213,9 +239,9 @@ export function CheckoutPage() {
             )}
 
             {/* Upsell hint */}
-            {subtotal < 500 && (
+            {afterCoupon < 500 && (
               <p className="mb-4 rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-500">
-                Додайте товарів ще на {formatPrice(String(500 - subtotal))}, щоб
+                Додайте товарів ще на {formatPrice(String(500 - afterCoupon))}, щоб
                 мати можливість оплатити бонусами до 75% вартості!
               </p>
             )}
@@ -226,6 +252,12 @@ export function CheckoutPage() {
                 <span className="text-gray-500">Сума</span>
                 <span className="text-gray-900">{formatPrice(String(subtotal))}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex items-baseline justify-between py-0.5 text-emerald-700">
+                  <span>Промокод {couponCode}</span>
+                  <span>−{formatPrice(String(discount))}</span>
+                </div>
+              )}
               {appliedBonuses > 0 && (
                 <div className="flex items-baseline justify-between py-0.5 text-amber-700">
                   <span>Оплачено бонусами</span>
@@ -272,6 +304,90 @@ export function CheckoutPage() {
         </aside>
       </div>
     </form>
+  )
+}
+
+function PromoCode({
+  couponCode,
+  discount,
+  onApply,
+  onRemove,
+  isApplying,
+  isRemoving,
+}: {
+  couponCode: string | null
+  discount: number
+  onApply: (code: string) => Promise<unknown>
+  onRemove: () => Promise<unknown>
+  isApplying: boolean
+  isRemoving: boolean
+}) {
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  // A coupon is already applied (and still valid for the current subtotal).
+  if (couponCode && discount > 0) {
+    return (
+      <div className="mb-4 flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2">
+        <div>
+          <p className="text-sm font-semibold text-emerald-800">
+            Промокод {couponCode}
+          </p>
+          <p className="text-xs text-emerald-700">Застосовано</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onRemove().catch(() => {})}
+          disabled={isRemoving}
+          className="text-xs font-medium text-emerald-700 underline hover:text-emerald-900 disabled:opacity-60"
+        >
+          Прибрати
+        </button>
+      </div>
+    )
+  }
+
+  const handleApply = async () => {
+    const trimmed = code.trim()
+    if (!trimmed) return
+    setError(null)
+    try {
+      await onApply(trimmed)
+      setCode('')
+    } catch (err) {
+      const detail = (err as AxiosError<{ detail?: string }>)?.response?.data
+        ?.detail
+      setError(detail || 'Не вдалося застосувати промокод')
+    }
+  }
+
+  return (
+    <div className="mb-4">
+      <div className="flex gap-2">
+        <input
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter applies the code without submitting the checkout form.
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleApply()
+            }
+          }}
+          placeholder="Промокод"
+          className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm uppercase text-gray-900 placeholder:normal-case placeholder:text-gray-400 focus:border-gray-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={handleApply}
+          disabled={isApplying || !code.trim()}
+          className="shrink-0 rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isApplying ? '…' : 'Застосувати'}
+        </button>
+      </div>
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
+    </div>
   )
 }
 
