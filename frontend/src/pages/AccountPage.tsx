@@ -40,7 +40,14 @@ export function AccountPage() {
       {/* Header: greeting + bonus card */}
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Мій акаунт</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">Мій акаунт</h1>
+            {user.is_staff && (
+              <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
+                Адміністратор
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">{user.email || user.username}</p>
         </div>
         <div className="sm:w-64">
