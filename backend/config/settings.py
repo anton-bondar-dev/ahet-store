@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -170,12 +171,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+def _required_env(name):
+    """Fetch a mandatory setting from the environment (.env), failing with a
+    readable message instead of a raw KeyError when it's missing."""
+    try:
+        return os.environ[name]
+    except KeyError:
+        raise ImproperlyConfigured(
+            f"Missing required environment variable {name!r}. "
+            f"Set it in backend/.env (see the DB_* keys)."
+        )
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['DB_NAME'],
-        'USER': os.environ['DB_USER'],
-        'PASSWORD': os.environ['DB_PASSWORD'],
+        'NAME': _required_env('DB_NAME'),
+        'USER': _required_env('DB_USER'),
+        'PASSWORD': _required_env('DB_PASSWORD'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }

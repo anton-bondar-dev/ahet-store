@@ -10,6 +10,7 @@ from ninja_jwt.authentication import JWTAuth
 from apps.accounts.models import Profile
 from apps.cart.services import auth_user, get_current_cart, get_session_id
 from apps.catalog.models import Product
+from apps.coupons.models import Coupon
 
 from .models import Order, OrderItem
 from .schemas import CheckoutIn, OrderCreatedOut, OrderOut
@@ -88,7 +89,14 @@ def checkout(request, payload: CheckoutIn):
 
         # Money order: subtotal → coupon discount → bonus cap on the remainder.
         subtotal = total_price  # Σ effective_price × qty
-        coupon = cart.coupon
+        # Lock the coupon row so two concurrent checkouts can't both pass the
+        # max_uses check and over-increment used_count (SET_NULL guarantees a
+        # set coupon_id still points at a live row).
+        coupon = None
+        if cart.coupon_id is not None:
+            coupon = (
+                Coupon.objects.select_for_update().filter(id=cart.coupon_id).first()
+            )
         coupon_discount = Decimal("0.00")
         if coupon and coupon.is_valid(subtotal):
             coupon_discount = coupon.discount_for(subtotal)
