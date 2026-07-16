@@ -30,6 +30,20 @@ class Profile(models.Model):
     # Loyalty bonuses (placeholder — no accrual logic yet).
     bonus_balance = models.IntegerField(default=0)
 
+    # Moderation: the Owner can block a customer temporarily (blocked_until) or
+    # permanently (blocked_permanent). Blocked customers are refused buyer/chat
+    # actions with 403.
+    blocked_until = models.DateTimeField(null=True, blank=True)
+    blocked_permanent = models.BooleanField(default=False)
+
+    @property
+    def is_blocked(self) -> bool:
+        from django.utils import timezone
+
+        if self.blocked_permanent:
+            return True
+        return self.blocked_until is not None and self.blocked_until > timezone.now()
+
     def __str__(self):
         return f"Profile<{self.user.username}>"
 
