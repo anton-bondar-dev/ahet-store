@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { BonusCard } from './account/BonusCard'
 import { CommentsTab } from './account/CommentsTab'
@@ -73,6 +73,14 @@ export function AccountPage() {
                 {tab.label}
               </button>
             ))}
+            {user.is_staff && (
+              <Link
+                to="/support/admin"
+                className="whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-medium text-red-700 transition hover:bg-red-50 md:mt-2 md:border-t md:border-gray-100 md:pt-3"
+              >
+                Панель підтримки
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => {

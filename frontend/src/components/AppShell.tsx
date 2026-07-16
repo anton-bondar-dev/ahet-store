@@ -1,7 +1,9 @@
 import { Route, Routes } from 'react-router-dom'
 import App from '../App'
+import { useAuth } from '../hooks/useAuth'
 import { useCartUI } from '../hooks/useCartUI'
 import { AccountPage } from '../pages/AccountPage'
+import { AdminSupportPage } from '../pages/AdminSupportPage'
 import { CartPage } from '../pages/CartPage'
 import { CheckoutPage } from '../pages/CheckoutPage'
 import { LoginPage } from '../pages/LoginPage'
@@ -9,12 +11,14 @@ import { OrderSuccessPage } from '../pages/OrderSuccessPage'
 import { ProductDetail } from '../pages/ProductDetail'
 import { RegisterPage } from '../pages/RegisterPage'
 import { Header } from './Header'
+import { SupportChatWidget } from './SupportChatWidget'
 
 // When the cart drawer is open, shift the whole page left by the drawer width
 // (on wide screens) so the drawer occupies a right rail and never overlaps the
 // products — the store reflows beside it, like the category sidebar.
 export function AppShell() {
   const { isDrawerOpen } = useCartUI()
+  const { user } = useAuth()
   return (
     <div
       className={`transition-[padding] duration-300 ${
@@ -31,7 +35,10 @@ export function AppShell() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/support/admin" element={<AdminSupportPage />} />
       </Routes>
+      {/* Support chat is available to authenticated customers on every page. */}
+      {user && <SupportChatWidget />}
     </div>
   )
 }
