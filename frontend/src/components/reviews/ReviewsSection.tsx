@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useGetMyReviews } from '../../api/generated/accounts/accounts'
 import { useGetProductReviews } from '../../api/generated/reviews/reviews'
 import { useAuth } from '../../hooks/useAuth'
+import { useIsStaff } from '../../hooks/useIsStaff'
 import { ReviewCard } from './ReviewCard'
 import { ReviewForm } from './ReviewForm'
 import { StarRating } from './StarRating'
@@ -18,6 +19,7 @@ export function ReviewsSection({
   reviewsCount: number
 }) {
   const { user } = useAuth()
+  const isStaff = useIsStaff()
   const { data } = useGetProductReviews(productId)
   const reviews = data?.data ?? []
 
@@ -38,7 +40,12 @@ export function ReviewsSection({
       </div>
 
       <div className="mt-6">
-        {user ? (
+        {isStaff ? (
+          // Staff don't author reviews — they answer them via the reply action.
+          <p className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+            Ви можете відповідати на відгуки як представник підтримки.
+          </p>
+        ) : user ? (
           <ReviewForm productId={productId} slug={slug} existing={myReview} />
         ) : (
           <p className="rounded-lg border border-gray-200 p-4 text-sm text-gray-500">

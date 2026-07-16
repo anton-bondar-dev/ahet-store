@@ -1,11 +1,16 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { productImageUrl } from '../api/http'
 import { useCart } from '../hooks/useCart'
+import { useIsStaff } from '../hooks/useIsStaff'
 import { effectivePrice, formatPrice } from '../lib/format'
 import { QuantityStepper } from '../components/QuantityStepper'
 
 export function CartPage() {
+  const isStaff = useIsStaff()
   const { items, totalQuantity, totalPrice, updateQuantity, removeItem } = useCart()
+
+  // Staff have no cart — bounce them back to the catalog.
+  if (isStaff) return <Navigate to="/" replace />
 
   // Items set to 0 (in the drawer or here) are filtered out — setting one to 0
   // on this page makes it disappear immediately once the cache updates.

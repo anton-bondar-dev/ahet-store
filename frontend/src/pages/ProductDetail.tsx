@@ -4,6 +4,7 @@ import { useGetProduct } from '../api/generated/catalog/catalog'
 import { productImageUrl } from '../api/http'
 import { ReviewsSection } from '../components/reviews/ReviewsSection'
 import { useCart } from '../hooks/useCart'
+import { useIsStaff } from '../hooks/useIsStaff'
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
 import { formatPrice } from '../lib/format'
 
@@ -11,6 +12,7 @@ type Crumb = { label: string; to?: string; node?: ReactNode }
 
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>()
+  const isStaff = useIsStaff()
   const { data, isLoading, isError } = useGetProduct(slug ?? '', {
     query: { enabled: !!slug },
   })
@@ -102,7 +104,7 @@ export function ProductDetail() {
             {inStock ? 'В наявності' : 'Немає в наявності'}
           </span>
 
-          <AddToCartButton productId={product.id} disabled={!inStock} />
+          {!isStaff && <AddToCartButton productId={product.id} disabled={!inStock} />}
 
           {product.description && (
             <div className="border-t border-gray-100 pt-4">

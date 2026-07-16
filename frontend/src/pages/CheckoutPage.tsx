@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { AxiosError } from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { getProfile } from '../api/generated/accounts/accounts'
 import { getGetCartQueryKey } from '../api/generated/cart/cart'
 import { useCheckout } from '../api/generated/orders/orders'
 import { productImageUrl } from '../api/http'
 import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
+import { useIsStaff } from '../hooks/useIsStaff'
 import { effectivePrice, formatPrice } from '../lib/format'
 
 type Form = {
@@ -44,6 +45,7 @@ export function CheckoutPage() {
     isRemovingCoupon,
   } = useCart()
   const { user, refreshUser } = useAuth()
+  const isStaff = useIsStaff()
   const checkout = useCheckout()
 
   const [form, setForm] = useState<Form>(EMPTY)
@@ -97,6 +99,9 @@ export function CheckoutPage() {
 
   const set = (key: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }))
+
+  // Staff can't place orders — the checkout page is off-limits.
+  if (isStaff) return <Navigate to="/" replace />
 
   if (totalQuantity === 0) {
     return (

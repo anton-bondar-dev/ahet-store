@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import type { ProductOut } from '../api/generated/onlineStoreAPI.schemas'
 import { productImageUrl } from '../api/http'
 import { useCart } from '../hooks/useCart'
+import { useIsStaff } from '../hooks/useIsStaff'
 import { formatPrice, reviewsPlural } from '../lib/format'
 
 export function ProductCard({ product }: { product: ProductOut }) {
+  const isStaff = useIsStaff()
   const imageUrl = productImageUrl(product.image)
   const isUnavailable = !product.is_active || product.stock === 0
   const onSale = product.discount_price != null && product.is_active
@@ -89,13 +91,16 @@ export function ProductCard({ product }: { product: ProductOut }) {
             </span>
           )}
 
-          {/* Bonus indicator */}
-          <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-            <CoinIcon />+{product.bonus_amount} бонусів
-          </div>
+          {/* Bonus indicator (loyalty is hidden from staff) */}
+          {!isStaff && (
+            <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+              <CoinIcon />+{product.bonus_amount} бонусів
+            </div>
+          )}
         </div>
 
-        <BuyButton productId={product.id} disabled={isUnavailable} />
+        {/* Staff can browse but not buy */}
+        {!isStaff && <BuyButton productId={product.id} disabled={isUnavailable} />}
       </div>
     </div>
   )

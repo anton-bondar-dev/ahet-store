@@ -10,6 +10,7 @@ from ninja_jwt.authentication import JWTAuth
 from apps.accounts.models import Profile
 from apps.cart.services import auth_user, get_current_cart, get_session_id
 from apps.catalog.models import Product
+from apps.core.permissions import forbid_staff
 from apps.coupons.models import Coupon
 
 from .models import Order, OrderItem
@@ -28,6 +29,7 @@ def get_my_orders(request):
 @router.post("/checkout", response=OrderCreatedOut, operation_id="checkout")
 def checkout(request, payload: CheckoutIn):
     user = auth_user(request)
+    forbid_staff(user)  # employees can't place orders
     sid = get_session_id(request)
 
     # Everything runs in one atomic block: stock validation, order creation,

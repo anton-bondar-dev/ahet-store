@@ -6,13 +6,20 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from apps.catalog.models import Product
+from apps.core.permissions import forbid_staff
 from apps.coupons.models import Coupon
 
 from .models import Cart, CartItem
 from .schemas import AddToCartIn, ApplyCouponIn, CartOut, UpdateQuantityIn
-from .services import get_current_cart, get_or_create_current_cart
+from .services import auth_user, get_current_cart, get_or_create_current_cart
 
 router = Router(tags=["cart"])
+
+
+def _require_customer(request):
+    # Staff accounts are employees — they may browse the catalog and view a cart,
+    # but every mutating cart action is blocked (403).
+    forbid_staff(auth_user(request))
 
 
 def serialize_cart(cart: Optional[Cart]) -> dict:
@@ -60,6 +67,7 @@ def get_cart(request):
 
 @router.post("/add", response=CartOut, operation_id="add_to_cart")
 def add_to_cart(request, payload: AddToCartIn):
+    _require_customer(request)
     cart = get_or_create_current_cart(request)
     if cart is None:
         raise HttpError(400, "Missing X-Session-Id header")
@@ -86,6 +94,7 @@ def _cart_subtotal(cart: Optional[Cart]) -> Decimal:
 # param route doesn't capture them.
 @router.post("/coupon", response=CartOut, operation_id="apply_coupon")
 def apply_coupon(request, payload: ApplyCouponIn):
+    _require_customer(request)
     cart = get_or_create_current_cart(request)
     if cart is None:
         raise HttpError(400, "Missing X-Session-Id header")
@@ -104,6 +113,7 @@ def apply_coupon(request, payload: ApplyCouponIn):
 
 @router.delete("/coupon", response=CartOut, operation_id="remove_coupon")
 def remove_coupon(request):
+    _require_customer(request)
     cart = get_current_cart(request)
     if cart is not None and cart.coupon_id is not None:
         cart.coupon = None
@@ -113,6 +123,7 @@ def remove_coupon(request):
 
 @router.patch("/{item_id}", response=CartOut, operation_id="update_cart_item")
 def update_cart_item(request, item_id: int, payload: UpdateQuantityIn):
+    _require_customer(request)
     cart = get_current_cart(request)
     if cart is None:
         raise HttpError(404, "Cart not found")
@@ -127,6 +138,7 @@ def update_cart_item(request, item_id: int, payload: UpdateQuantityIn):
 
 @router.delete("/{item_id}", response=CartOut, operation_id="delete_cart_item")
 def delete_cart_item(request, item_id: int):
+    _require_customer(request)
     cart = get_current_cart(request)
     if cart is None:
         raise HttpError(404, "Cart not found")
