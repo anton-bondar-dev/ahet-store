@@ -30,6 +30,22 @@ def auth_user(request):
         return None
 
 
+def impersonator_id(request):
+    """If the request is running under an impersonation token (a staff member
+    viewing the app as a customer), return the staff member's id, else None.
+    Used to block real checkout/writes while impersonating."""
+    header = request.headers.get("Authorization", "")
+    if not header.startswith("Bearer "):
+        return None
+    raw = header[7:].strip()
+    try:
+        from ninja_jwt.tokens import AccessToken
+
+        return AccessToken(raw).get("imp_by")
+    except Exception:
+        return None
+
+
 def _cart_qs():
     return Cart.objects.prefetch_related("items__product__category")
 

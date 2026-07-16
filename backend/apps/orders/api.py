@@ -8,9 +8,14 @@ from ninja.errors import HttpError
 from ninja_jwt.authentication import JWTAuth
 
 from apps.accounts.models import Profile
-from apps.cart.services import auth_user, get_current_cart, get_session_id
+from apps.cart.services import (
+    auth_user,
+    get_current_cart,
+    get_session_id,
+    impersonator_id,
+)
 from apps.catalog.models import Product
-from apps.core.permissions import forbid_staff
+from apps.core.permissions import forbid_blocked, forbid_staff
 from apps.coupons.models import Coupon
 
 from .models import Order, OrderItem
@@ -30,6 +35,10 @@ def get_my_orders(request):
 def checkout(request, payload: CheckoutIn):
     user = auth_user(request)
     forbid_staff(user)  # employees can't place orders
+    forbid_blocked(user)  # blocked customers can't order
+    if impersonator_id(request) is not None:
+        # A staff member viewing as this customer — debugging only, no real orders.
+        raise HttpError(403, "Оформлення недоступне в режимі перегляду від імені клієнта")
     sid = get_session_id(request)
 
     # Everything runs in one atomic block: stock validation, order creation,

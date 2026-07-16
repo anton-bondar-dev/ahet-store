@@ -59,6 +59,11 @@ def update_profile(request, payload: ProfileIn):
     profile.save(
         update_fields=["first_name", "last_name", "phone_number", "city", "delivery_address"]
     )
+    # Keep the auth User's display name in sync so it updates everywhere it is
+    # shown (header, chat author names, staff dossier) — not just at checkout.
+    user.first_name = payload.first_name
+    user.last_name = payload.last_name
+    user.save(update_fields=["first_name", "last_name"])
     return serialize_profile(user)
 
 

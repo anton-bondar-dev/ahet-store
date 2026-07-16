@@ -10,7 +10,11 @@ DEFAULT_PASSWORD = "changeme-support-admin"  # override via SUPPORT_ADMIN_PASSWO
 
 
 class Command(BaseCommand):
-    help = "Create (or update) the unified 'support' superuser account. Idempotent."
+    help = (
+        "Create (or update) the unified 'support' help-desk account. Idempotent. "
+        "This is a STAFF account, not a superuser — the Owner (superuser) is a "
+        "separate account and is the only role that can read the audit log."
+    )
 
     def handle(self, *args, **options):
         password = os.environ.get("SUPPORT_ADMIN_PASSWORD", DEFAULT_PASSWORD)
@@ -27,11 +31,11 @@ class Command(BaseCommand):
         user.email = EMAIL
         user.first_name = FIRST_NAME
         user.is_staff = True
-        user.is_superuser = True
+        user.is_superuser = False  # Support Admin ≠ Owner; no superuser powers.
         user.set_password(password)
         user.save()
 
         verb = "Created" if created else "Updated"
         self.stdout.write(self.style.SUCCESS(
-            f"{verb} superuser '{USERNAME}' <{EMAIL}> (display name '{FIRST_NAME}')."
+            f"{verb} support-admin (staff) '{USERNAME}' <{EMAIL}> (display name '{FIRST_NAME}')."
         ))

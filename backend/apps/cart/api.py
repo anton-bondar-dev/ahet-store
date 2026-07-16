@@ -6,7 +6,7 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from apps.catalog.models import Product
-from apps.core.permissions import forbid_staff
+from apps.core.permissions import forbid_blocked, forbid_staff
 from apps.coupons.models import Coupon
 
 from .models import Cart, CartItem
@@ -18,8 +18,10 @@ router = Router(tags=["cart"])
 
 def _require_customer(request):
     # Staff accounts are employees — they may browse the catalog and view a cart,
-    # but every mutating cart action is blocked (403).
-    forbid_staff(auth_user(request))
+    # but every mutating cart action is blocked (403). Blocked customers too.
+    user = auth_user(request)
+    forbid_staff(user)
+    forbid_blocked(user)
 
 
 def serialize_cart(cart: Optional[Cart]) -> dict:

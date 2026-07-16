@@ -17,16 +17,26 @@ class LoginIn(Schema):
 class UserOut(Schema):
     id: int
     username: str
+    first_name: str = ""  # display name shown in the header / workspace
     email: str
+
+    @staticmethod
+    def resolve_first_name(obj):
+        return obj.first_name or ""
     is_2fa_enabled: bool = False
     preferred_2fa_method: str = "none"
     telegram_linked: bool = False
     bonus_balance: int = 0
     is_staff: bool = False
+    is_superuser: bool = False  # the Owner role — gates the audit log view
 
     @staticmethod
     def resolve_is_staff(obj):
         return bool(obj.is_staff or obj.is_superuser)
+
+    @staticmethod
+    def resolve_is_superuser(obj):
+        return bool(obj.is_superuser)
 
     @staticmethod
     def resolve_is_2fa_enabled(obj):

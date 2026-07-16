@@ -20,7 +20,7 @@ const EMPTY: Form = {
   delivery_address: '',
 }
 
-export function PersonalInfoTab() {
+export function PersonalInfoTab({ nameOnly = false }: { nameOnly?: boolean }) {
   const { refreshUser } = useAuth()
   const [form, setForm] = useState<Form>(EMPTY)
   const [email, setEmail] = useState('')
@@ -76,29 +76,37 @@ export function PersonalInfoTab() {
 
   return (
     <div>
-      <h2 className="mb-1 text-lg font-semibold text-gray-900">Особисті дані</h2>
+      <h2 className="mb-1 text-lg font-semibold text-gray-900">
+        {nameOnly ? 'Ваше ім’я' : 'Особисті дані'}
+      </h2>
       <p className="mb-5 text-sm text-gray-500">
-        Ці дані автоматично підставляються під час оформлення замовлення.
+        {nameOnly
+          ? 'Ім’я, яке бачать колеги у робочому просторі підтримки.'
+          : 'Ці дані автоматично підставляються під час оформлення замовлення.'}
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field
-            label="Ім'я користувача (логін)"
-            value={form.username}
-            onChange={set('username')}
-            required
-          />
-          <Field label="Email" value={email} disabled />
           <Field label="Ім'я" value={form.first_name} onChange={set('first_name')} />
           <Field label="Прізвище" value={form.last_name} onChange={set('last_name')} />
-          <Field label="Телефон" value={form.phone_number} onChange={set('phone_number')} />
-          <Field label="Місто" value={form.city} onChange={set('city')} />
-          <Field
-            label="Відділення пошти / Адреса"
-            value={form.delivery_address}
-            onChange={set('delivery_address')}
-          />
+          {!nameOnly && (
+            <>
+              <Field
+                label="Ім'я користувача (логін)"
+                value={form.username}
+                onChange={set('username')}
+                required
+              />
+              <Field label="Email" value={email} disabled />
+              <Field label="Телефон" value={form.phone_number} onChange={set('phone_number')} />
+              <Field label="Місто" value={form.city} onChange={set('city')} />
+              <Field
+                label="Відділення пошти / Адреса"
+                value={form.delivery_address}
+                onChange={set('delivery_address')}
+              />
+            </>
+          )}
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

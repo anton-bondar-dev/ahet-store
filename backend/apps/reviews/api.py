@@ -5,7 +5,7 @@ from ninja import Router
 from ninja_jwt.authentication import JWTAuth
 
 from apps.catalog.models import Product
-from apps.core.permissions import forbid_staff
+from apps.core.permissions import forbid_blocked, forbid_staff
 
 from .models import Review, ReviewReply
 from .schemas import ReplyIn, ReviewIn, ReviewOut, ReviewReplyOut
@@ -51,6 +51,7 @@ def get_product_reviews(request, product_id: int):
 def create_review(request, product_id: int, payload: ReviewIn):
     # Staff can reply to reviews (their job) but never author their own.
     forbid_staff(request.auth)
+    forbid_blocked(request.auth)
     product = get_object_or_404(Product, id=product_id)
     rating = max(1, min(payload.rating, 5))
     defaults = {

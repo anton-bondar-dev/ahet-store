@@ -50,6 +50,16 @@ export function Header() {
           </button>
         )}
 
+        {/* Staff: quick access to the Helpdesk from anywhere */}
+        {isStaff && (
+          <Link
+            to="/support/admin"
+            className="inline-flex shrink-0 items-center gap-2 rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-gray-700"
+          >
+            Панель підтримки
+          </Link>
+        )}
+
         {/* Auth state */}
         {user ? (
           <Link
@@ -69,7 +79,7 @@ export function Header() {
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
-            <span className="max-w-[8rem] truncate">{user.username}</span>
+            <span className="max-w-[8rem] truncate">{user.first_name || user.username}</span>
           </Link>
         ) : (
           <Link

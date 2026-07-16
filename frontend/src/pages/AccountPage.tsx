@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { roleLabel } from '../lib/roles'
 import { BonusCard } from './account/BonusCard'
 import { CommentsTab } from './account/CommentsTab'
 import { OrdersTab } from './account/OrdersTab'
@@ -16,9 +17,9 @@ const TABS = [
   { key: 'security', label: 'Безпека & 2FA' },
 ]
 
-// Support staff use a stripped-down account: no buyer-centric tabs (orders,
-// viewing history, own reviews) or bonuses — their work lives in the Helpdesk.
-const STAFF_TAB_KEYS = new Set(['profile', 'security'])
+// Support staff use a stripped-down account: only their profile name — no
+// buyer tabs (orders, history, reviews), no bonuses, no Security/2FA.
+const STAFF_TAB_KEYS = new Set(['profile'])
 
 export function AccountPage() {
   const navigate = useNavigate()
@@ -50,9 +51,9 @@ export function AccountPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900">Мій акаунт</h1>
-            {user.is_staff && (
+            {roleLabel(user) && (
               <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
-                Адміністратор
+                {roleLabel(user)}
               </span>
             )}
           </div>
@@ -122,7 +123,7 @@ export function AccountPage() {
 
         {/* Content */}
         <main className="min-w-0 flex-1">
-          {active === 'profile' && <PersonalInfoTab />}
+          {active === 'profile' && <PersonalInfoTab nameOnly={user.is_staff} />}
           {active === 'orders' && <OrdersTab />}
           {active === 'viewed' && <ViewedTab />}
           {active === 'comments' && <CommentsTab />}

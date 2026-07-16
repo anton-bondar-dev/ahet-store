@@ -22,3 +22,13 @@ def forbid_staff(user):
     (anonymous), which is always allowed through."""
     if is_staff_user(user):
         raise HttpError(403, STAFF_FORBIDDEN_MSG)
+
+
+def forbid_blocked(user):
+    """Raise 403 when a customer has been blocked by the Owner. Anonymous and
+    staff users are unaffected here."""
+    if user is None:
+        return
+    profile = getattr(user, "profile", None)
+    if profile is not None and profile.is_blocked:
+        raise HttpError(403, "Ваш акаунт заблоковано. Зверніться до підтримки.")
