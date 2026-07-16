@@ -48,6 +48,15 @@ export function UserChatPanel({
           </p>
         ) : (
           messages.map((m) => {
+            if (m.sender === 'system') {
+              return (
+                <div key={m.id} className="flex justify-center">
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-center text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+                    {m.text}
+                  </span>
+                </div>
+              )
+            }
             const mine = m.sender === 'user'
             return (
               <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>

@@ -12,6 +12,7 @@ import { ProductDetail } from '../pages/ProductDetail'
 import { RegisterPage } from '../pages/RegisterPage'
 import { UserSupportPage } from '../pages/UserSupportPage'
 import { Header } from './Header'
+import { ImpersonationBanner } from './ImpersonationBanner'
 import { SupportChatWidget } from './SupportChatWidget'
 
 // When the cart drawer is open, shift the whole page left by the drawer width
@@ -30,6 +31,7 @@ export function AppShell() {
         isDrawerOpen ? 'lg:pr-[28rem]' : ''
       }`}
     >
+      <ImpersonationBanner />
       <Header />
       <Routes>
         <Route path="/" element={<App />} />

@@ -6,9 +6,27 @@ import { UserChatPanel } from './support/UserChatPanel'
 // full-page dashboard view at /me/support hides it to avoid a duplicate UI).
 // While closed it keeps polling so a new "ahetStore" reply raises an unread
 // badge and plays a subtle sound; opening the panel clears both.
+// Persist open state so navigating or an incidental re-render never closes the
+// chat — only the launcher / X toggles it.
+function readOpen(): boolean {
+  try {
+    return sessionStorage.getItem('support-chat-open') === '1'
+  } catch {
+    return false
+  }
+}
+
 export function SupportChatWidget() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(readOpen)
   const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('support-chat-open', open ? '1' : '0')
+    } catch {
+      /* storage unavailable */
+    }
+  }, [open])
 
   // Poll faster while open, slower in the background while closed.
   const { messages, isLoading, sending, send, canRate, rate } = useSupportChat(

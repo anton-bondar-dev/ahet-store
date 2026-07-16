@@ -5,6 +5,7 @@ import {
   getRefreshToken,
   setAccessToken,
 } from '../lib/authToken';
+import { getImpersonationToken, stopImpersonation } from '../lib/impersonation';
 import { getSessionId } from '../lib/session';
 
 // Single source of truth for the backend origin.
@@ -18,7 +19,9 @@ axios.defaults.baseURL = API_BASE_URL;
 // logged in) to every request.
 axios.interceptors.request.use((config) => {
   config.headers.set('X-Session-Id', getSessionId());
-  const token = getAccessToken();
+  // While impersonating, the scoped storefront token wins so the app runs as
+  // the customer; otherwise use the staff/customer's own access token.
+  const token = getImpersonationToken() ?? getAccessToken();
   if (token) config.headers.set('Authorization', `Bearer ${token}`);
   return config;
 });
@@ -52,6 +55,12 @@ axios.interceptors.response.use(
     const original = error.config;
     const status = error.response?.status;
     const url: string = original?.url ?? '';
+    // An expired impersonation token → drop impersonation and fall back to the
+    // staff session rather than trying to refresh a token that has no refresh.
+    if (status === 401 && getImpersonationToken()) {
+      stopImpersonation();
+      return Promise.reject(error);
+    }
     if (
       status === 401 &&
       original &&
