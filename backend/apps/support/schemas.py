@@ -24,13 +24,16 @@ class OkOut(Schema):
 # --- User-facing (staff identity masked to a single "support" entity) ---------
 class UserChatMessageOut(Schema):
     id: int
-    sender: str        # "support" | "user"
+    sender: str        # "support" | "user" | "system"
     author_name: str   # SUPPORT_DISPLAY_NAME for staff, else the user's own name
     text: str
+    is_system: bool = False
     created_at: datetime
 
     @staticmethod
     def resolve_sender(obj):
+        if obj.is_system:
+            return "system"
         return "support" if obj.from_staff else "user"
 
     @staticmethod
@@ -58,6 +61,8 @@ class AdminChatMessageOut(Schema):
     sender_username: str
     sender_name: str
     from_staff: bool
+    is_system: bool = False
+    meta: dict = {}
     text: str
     created_at: datetime
 
@@ -73,6 +78,26 @@ class AdminChatMessageOut(Schema):
         return user.first_name or user.username
 
 
+class CustomerTagOut(Schema):
+    id: int
+    label: str
+    color: str
+
+
+class TicketPresenceOut(Schema):
+    staff_username: str
+    staff_name: str
+    state: str  # "viewing" | "typing"
+
+    @staticmethod
+    def resolve_staff_username(obj):
+        return obj.staff.username if obj.staff else "?"
+
+    @staticmethod
+    def resolve_staff_name(obj):
+        return (obj.staff.first_name or obj.staff.username) if obj.staff else "?"
+
+
 class AdminTicketOut(Schema):
     id: int
     user_username: str
@@ -80,6 +105,7 @@ class AdminTicketOut(Schema):
     subject: str
     updated_at: datetime
     unread_count: int = 0
+    is_overdue: bool = False  # SLA breach → 🚨 + floats to top
 
     @staticmethod
     def resolve_user_username(obj):
@@ -88,17 +114,45 @@ class AdminTicketOut(Schema):
 
 class AdminTicketDetailOut(Schema):
     id: int
+    user_id: int
     user_username: str
+    customer_name: str
+    customer_blocked: bool = False
     status: str
+    is_overdue: bool = False
     messages: List[AdminChatMessageOut]
+    tags: List[CustomerTagOut]
+    viewers: List[TicketPresenceOut]  # other staff currently on this ticket
+
+    @staticmethod
+    def resolve_user_id(obj):
+        return obj.user_id
+
+    @staticmethod
+    def resolve_customer_blocked(obj):
+        profile = getattr(obj.user, "profile", None)
+        return bool(profile and profile.is_blocked)
 
     @staticmethod
     def resolve_user_username(obj):
         return obj.user.username
 
     @staticmethod
+    def resolve_customer_name(obj):
+        return obj.user.first_name or obj.user.username
+
+    @staticmethod
     def resolve_messages(obj):
         return list(obj.messages.select_related("sender").all())
+
+    @staticmethod
+    def resolve_tags(obj):
+        return [a.tag for a in obj.user.support_tags.select_related("tag").all()]
+
+    @staticmethod
+    def resolve_viewers(obj):
+        # Populated by the view (fresh heartbeats, excluding the caller).
+        return getattr(obj, "_viewers", [])
 
 
 # --- Support workspace: metrics, customer context, tagged comments -----------
@@ -144,3 +198,121 @@ class TaggedCommentOut(Schema):
     @staticmethod
     def resolve_author_name(obj):
         return obj.user.first_name or obj.user.username
+
+
+# --- Phase 1: tags -----------------------------------------------------------
+class TagCreateIn(Schema):
+    label: str
+    color: str = "#6b7280"
+
+
+class AssignTagIn(Schema):
+    tag_id: int
+
+
+# --- Phase 2: macros ---------------------------------------------------------
+class MacroOut(Schema):
+    id: int
+    title: str
+    content: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class MacroIn(Schema):
+    title: str
+    content: str
+
+
+class MacroRenderIn(Schema):
+    ticket_id: int
+
+
+class RenderedTextOut(Schema):
+    content: str
+
+
+# --- Phase 4: impersonation --------------------------------------------------
+class ImpersonateOut(Schema):
+    access: str            # scoped JWT to run the storefront as the customer
+    target_username: str
+    target_name: str
+
+
+# --- Phase 5: actionable chat ------------------------------------------------
+class ChatActionIn(Schema):
+    type: str              # "grant_bonuses" | "generate_coupon"
+    amount: int = 0        # bonuses to grant
+    percent: int = 0       # coupon discount %
+
+
+class ActionResultOut(Schema):
+    ok: bool
+    pending: bool = False  # True → sent to the Team Lead for approval
+
+
+class ApprovalOut(Schema):
+    id: int
+    requested_by: str
+    ticket_id: int
+    customer_name: str
+    action_type: str
+    amount: int
+    percent: int
+    created_at: datetime
+
+    @staticmethod
+    def resolve_requested_by(obj):
+        u = obj.requested_by
+        return (u.first_name or u.username) if u else "?"
+
+    @staticmethod
+    def resolve_customer_name(obj):
+        u = obj.ticket.user
+        return u.first_name or u.username
+
+
+# --- Phase 6: presence -------------------------------------------------------
+class PresenceIn(Schema):
+    state: str = "viewing"  # "viewing" | "typing"
+
+
+# --- Phase 7: audit ----------------------------------------------------------
+class AuditLogOut(Schema):
+    id: int
+    admin_username: str
+    action_type: str
+    target_username: Optional[str] = None
+    ticket_id: Optional[int] = None
+    meta: dict
+    created_at: datetime
+
+    @staticmethod
+    def resolve_admin_username(obj):
+        return obj.admin_user.username if obj.admin_user else "(видалений)"
+
+    @staticmethod
+    def resolve_target_username(obj):
+        return obj.target_user.username if obj.target_user else None
+
+
+# --- Owner: staff dossiers + moderation --------------------------------------
+class StaffDossierOut(Schema):
+    id: int
+    username: str
+    name: str
+    role: str              # "owner" | "operator"
+    is_active: bool        # False = blocked operator
+    resolved_tickets: int
+    comments_resolved: int
+    ratings_total: int
+    positive_rate: Optional[int] = None
+
+
+class BlockUserIn(Schema):
+    permanent: bool = False
+    days: int = 0          # temporary block length when not permanent
+
+
+class CancelBonusIn(Schema):
+    message_id: int        # the grant system-message to reverse
