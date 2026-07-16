@@ -81,11 +81,20 @@ export interface CartOut {
   total_quantity: number;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_price: string;
+  coupon_code?: string | null;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  coupon_discount?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_after_discount?: string;
 }
 
 export interface AddToCartIn {
   product_id: number;
   quantity?: number;
+}
+
+export interface ApplyCouponIn {
+  code: string;
 }
 
 export interface UpdateQuantityIn {
@@ -107,6 +116,9 @@ export interface OrderOut {
   total_price: string;
   bonus_earned: number;
   applied_bonuses: number;
+  coupon_code?: string | null;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  coupon_discount: string;
   created_at: string;
   items: OrderItemOut[];
 }
@@ -133,6 +145,7 @@ export interface UserOut {
   preferred_2fa_method?: string;
   telegram_linked?: boolean;
   bonus_balance?: number;
+  is_staff?: boolean;
 }
 
 export interface AuthResult {
@@ -212,6 +225,49 @@ export interface MyReviewOut {
   rating: number;
   text: string;
   created_at: string;
+}
+
+export interface UserChatMessageOut {
+  id: number;
+  sender: string;
+  author_name: string;
+  text: string;
+  created_at: string;
+}
+
+export interface UserChatOut {
+  ticket_id: number;
+  status: string;
+  messages: UserChatMessageOut[];
+}
+
+export interface ChatMessageIn {
+  text: string;
+}
+
+export interface AdminTicketOut {
+  id: number;
+  user_username: string;
+  status: string;
+  subject: string;
+  updated_at: string;
+  unread_count?: number;
+}
+
+export interface AdminChatMessageOut {
+  id: number;
+  sender_username: string;
+  sender_name: string;
+  from_staff: boolean;
+  text: string;
+  created_at: string;
+}
+
+export interface AdminTicketDetailOut {
+  id: number;
+  user_username: string;
+  status: string;
+  messages: AdminChatMessageOut[];
 }
 
 export type ListProductsParams = {

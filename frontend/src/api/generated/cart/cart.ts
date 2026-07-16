@@ -32,6 +32,7 @@ import type {
 
 import type {
   AddToCartIn,
+  ApplyCouponIn,
   CartOut,
   UpdateQuantityIn
 } from '../onlineStoreAPI.schemas';
@@ -205,6 +206,127 @@ export const useAddToCart = <TError = AxiosError<unknown>,
         TContext
       > => {
       return useMutation(getAddToCartMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Apply Coupon
+ */
+export const applyCoupon = (
+    applyCouponIn: ApplyCouponIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CartOut>> => {
+
+
+    return axios.default.post(
+      `/api/cart/coupon`,
+      applyCouponIn,options
+    );
+  }
+
+
+
+
+export const getApplyCouponMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applyCoupon>>, TError,{data: ApplyCouponIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof applyCoupon>>, TError,{data: ApplyCouponIn}, TContext> => {
+
+const mutationKey = ['applyCoupon'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof applyCoupon>>, {data: ApplyCouponIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  applyCoupon(data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApplyCouponMutationResult = NonNullable<Awaited<ReturnType<typeof applyCoupon>>>
+    export type ApplyCouponMutationBody = ApplyCouponIn
+    export type ApplyCouponMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Apply Coupon
+ */
+export const useApplyCoupon = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof applyCoupon>>, TError,{data: ApplyCouponIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof applyCoupon>>,
+        TError,
+        {data: ApplyCouponIn},
+        TContext
+      > => {
+      return useMutation(getApplyCouponMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Remove Coupon
+ */
+export const removeCoupon = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CartOut>> => {
+
+
+    return axios.default.delete(
+      `/api/cart/coupon`,options
+    );
+  }
+
+
+
+
+export const getRemoveCouponMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCoupon>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof removeCoupon>>, TError,void, TContext> => {
+
+const mutationKey = ['removeCoupon'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeCoupon>>, void> = () => {
+
+
+          return  removeCoupon(axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveCouponMutationResult = NonNullable<Awaited<ReturnType<typeof removeCoupon>>>
+
+    export type RemoveCouponMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Remove Coupon
+ */
+export const useRemoveCoupon = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCoupon>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeCoupon>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getRemoveCouponMutationOptions(options), queryClient);
     }
     /**
  * @summary Update Cart Item
