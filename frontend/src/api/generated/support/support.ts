@@ -31,13 +31,30 @@ import type {
 } from 'axios';
 
 import type {
+  ActionResultOut,
   AdminTicketDetailOut,
   AdminTicketOut,
+  ApprovalOut,
+  AssignTagIn,
+  AuditLogOut,
+  BlockUserIn,
+  CancelBonusIn,
+  ChatActionIn,
   ChatMessageIn,
   CustomerOrderOut,
+  CustomerTagOut,
+  ImpersonateOut,
+  ListTicketsParams,
+  MacroIn,
+  MacroOut,
+  MacroRenderIn,
   OkOut,
+  PresenceIn,
   RatingIn,
+  RenderedTextOut,
+  StaffDossierOut,
   StaffMetricsOut,
+  TagCreateIn,
   TaggedCommentOut,
   UserChatMessageOut,
   UserChatOut
@@ -278,35 +295,37 @@ export const useRateSupport = <TError = AxiosError<unknown>,
  * @summary List Tickets
  */
 export const listTickets = (
-     options?: AxiosRequestConfig
+    params?: ListTicketsParams, options?: AxiosRequestConfig
  ): Promise<AxiosResponse<AdminTicketOut[]>> => {
 
 
     return axios.default.get(
-      `/api/support/admin/tickets`,options
+      `/api/support/admin/tickets`,{
+    ...options,
+        params: {...params, ...options?.params},}
     );
   }
 
 
 
 
-export const getListTicketsQueryKey = () => {
+export const getListTicketsQueryKey = (params?: ListTicketsParams,) => {
     return [
-    `/api/support/admin/tickets`
+    `/api/support/admin/tickets`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListTicketsQueryOptions = <TData = Awaited<ReturnType<typeof listTickets>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>>, axios?: AxiosRequestConfig}
+export const getListTicketsQueryOptions = <TData = Awaited<ReturnType<typeof listTickets>>, TError = AxiosError<unknown>>(params?: ListTicketsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>>, axios?: AxiosRequestConfig}
 ) => {
 
 const {query: queryOptions, axios: axiosOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListTicketsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListTicketsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTickets>>> = ({ signal }) => listTickets({ signal, ...axiosOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTickets>>> = ({ signal }) => listTickets(params, { signal, ...axiosOptions });
 
 
 
@@ -320,7 +339,7 @@ export type ListTicketsQueryError = AxiosError<unknown>
 
 
 export function useListTickets<TData = Awaited<ReturnType<typeof listTickets>>, TError = AxiosError<unknown>>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>> & Pick<
+ params: undefined |  ListTicketsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listTickets>>,
           TError,
@@ -330,7 +349,7 @@ export function useListTickets<TData = Awaited<ReturnType<typeof listTickets>>, 
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListTickets<TData = Awaited<ReturnType<typeof listTickets>>, TError = AxiosError<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>> & Pick<
+ params?: ListTicketsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listTickets>>,
           TError,
@@ -340,7 +359,7 @@ export function useListTickets<TData = Awaited<ReturnType<typeof listTickets>>, 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useListTickets<TData = Awaited<ReturnType<typeof listTickets>>, TError = AxiosError<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>>, axios?: AxiosRequestConfig}
+ params?: ListTicketsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>>, axios?: AxiosRequestConfig}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -348,11 +367,11 @@ export function useListTickets<TData = Awaited<ReturnType<typeof listTickets>>, 
  */
 
 export function useListTickets<TData = Awaited<ReturnType<typeof listTickets>>, TError = AxiosError<unknown>>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>>, axios?: AxiosRequestConfig}
+ params?: ListTicketsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTickets>>, TError, TData>>, axios?: AxiosRequestConfig}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListTicketsQueryOptions(options)
+  const queryOptions = getListTicketsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -907,4 +926,1558 @@ export const useResolveTaggedComment = <TError = AxiosError<unknown>,
         TContext
       > => {
       return useMutation(getResolveTaggedCommentMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List Tags
+ */
+export const listTags = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CustomerTagOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/support/admin/tags`,options
+    );
+  }
+
+
+
+
+export const getListTagsQueryKey = () => {
+    return [
+    `/api/support/admin/tags`
+    ] as const;
+    }
+
+
+export const getListTagsQueryOptions = <TData = Awaited<ReturnType<typeof listTags>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTagsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTags>>> = ({ signal }) => listTags({ signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListTagsQueryResult = NonNullable<Awaited<ReturnType<typeof listTags>>>
+export type ListTagsQueryError = AxiosError<unknown>
+
+
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTags>>,
+          TError,
+          Awaited<ReturnType<typeof listTags>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listTags>>,
+          TError,
+          Awaited<ReturnType<typeof listTags>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Tags
+ */
+
+export function useListTags<TData = Awaited<ReturnType<typeof listTags>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listTags>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListTagsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * @summary Create Tag
+ */
+export const createTag = (
+    tagCreateIn: TagCreateIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CustomerTagOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/tags`,
+      tagCreateIn,options
+    );
+  }
+
+
+
+
+export const getCreateTagMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTag>>, TError,{data: TagCreateIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof createTag>>, TError,{data: TagCreateIn}, TContext> => {
+
+const mutationKey = ['createTag'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTag>>, {data: TagCreateIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTag(data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTagMutationResult = NonNullable<Awaited<ReturnType<typeof createTag>>>
+    export type CreateTagMutationBody = TagCreateIn
+    export type CreateTagMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Create Tag
+ */
+export const useCreateTag = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTag>>, TError,{data: TagCreateIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createTag>>,
+        TError,
+        {data: TagCreateIn},
+        TContext
+      > => {
+      return useMutation(getCreateTagMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Assign Tag
+ */
+export const assignTag = (
+    userId: number,
+    assignTagIn: AssignTagIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CustomerTagOut[]>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/users/${userId}/tags`,
+      assignTagIn,options
+    );
+  }
+
+
+
+
+export const getAssignTagMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignTag>>, TError,{userId: number;data: AssignTagIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof assignTag>>, TError,{userId: number;data: AssignTagIn}, TContext> => {
+
+const mutationKey = ['assignTag'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignTag>>, {userId: number;data: AssignTagIn}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  assignTag(userId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AssignTagMutationResult = NonNullable<Awaited<ReturnType<typeof assignTag>>>
+    export type AssignTagMutationBody = AssignTagIn
+    export type AssignTagMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Assign Tag
+ */
+export const useAssignTag = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignTag>>, TError,{userId: number;data: AssignTagIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof assignTag>>,
+        TError,
+        {userId: number;data: AssignTagIn},
+        TContext
+      > => {
+      return useMutation(getAssignTagMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Remove Tag
+ */
+export const removeTag = (
+    userId: number,
+    tagId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<CustomerTagOut[]>> => {
+
+
+    return axios.default.delete(
+      `/api/support/admin/users/${userId}/tags/${tagId}`,options
+    );
+  }
+
+
+
+
+export const getRemoveTagMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeTag>>, TError,{userId: number;tagId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof removeTag>>, TError,{userId: number;tagId: number}, TContext> => {
+
+const mutationKey = ['removeTag'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeTag>>, {userId: number;tagId: number}> = (props) => {
+          const {userId,tagId} = props ?? {};
+
+          return  removeTag(userId,tagId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveTagMutationResult = NonNullable<Awaited<ReturnType<typeof removeTag>>>
+
+    export type RemoveTagMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Remove Tag
+ */
+export const useRemoveTag = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeTag>>, TError,{userId: number;tagId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeTag>>,
+        TError,
+        {userId: number;tagId: number},
+        TContext
+      > => {
+      return useMutation(getRemoveTagMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List Macros
+ */
+export const listMacros = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<MacroOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/support/admin/macros`,options
+    );
+  }
+
+
+
+
+export const getListMacrosQueryKey = () => {
+    return [
+    `/api/support/admin/macros`
+    ] as const;
+    }
+
+
+export const getListMacrosQueryOptions = <TData = Awaited<ReturnType<typeof listMacros>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMacros>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMacrosQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMacros>>> = ({ signal }) => listMacros({ signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMacros>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMacrosQueryResult = NonNullable<Awaited<ReturnType<typeof listMacros>>>
+export type ListMacrosQueryError = AxiosError<unknown>
+
+
+export function useListMacros<TData = Awaited<ReturnType<typeof listMacros>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMacros>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMacros>>,
+          TError,
+          Awaited<ReturnType<typeof listMacros>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMacros<TData = Awaited<ReturnType<typeof listMacros>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMacros>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMacros>>,
+          TError,
+          Awaited<ReturnType<typeof listMacros>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMacros<TData = Awaited<ReturnType<typeof listMacros>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMacros>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Macros
+ */
+
+export function useListMacros<TData = Awaited<ReturnType<typeof listMacros>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMacros>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMacrosQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * @summary Create Macro
+ */
+export const createMacro = (
+    macroIn: MacroIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<MacroOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/macros`,
+      macroIn,options
+    );
+  }
+
+
+
+
+export const getCreateMacroMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMacro>>, TError,{data: MacroIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof createMacro>>, TError,{data: MacroIn}, TContext> => {
+
+const mutationKey = ['createMacro'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMacro>>, {data: MacroIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMacro(data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMacroMutationResult = NonNullable<Awaited<ReturnType<typeof createMacro>>>
+    export type CreateMacroMutationBody = MacroIn
+    export type CreateMacroMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Create Macro
+ */
+export const useCreateMacro = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMacro>>, TError,{data: MacroIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createMacro>>,
+        TError,
+        {data: MacroIn},
+        TContext
+      > => {
+      return useMutation(getCreateMacroMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Update Macro
+ */
+export const updateMacro = (
+    macroId: number,
+    macroIn: MacroIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<MacroOut>> => {
+
+
+    return axios.default.put(
+      `/api/support/admin/macros/${macroId}`,
+      macroIn,options
+    );
+  }
+
+
+
+
+export const getUpdateMacroMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMacro>>, TError,{macroId: number;data: MacroIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMacro>>, TError,{macroId: number;data: MacroIn}, TContext> => {
+
+const mutationKey = ['updateMacro'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMacro>>, {macroId: number;data: MacroIn}> = (props) => {
+          const {macroId,data} = props ?? {};
+
+          return  updateMacro(macroId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMacroMutationResult = NonNullable<Awaited<ReturnType<typeof updateMacro>>>
+    export type UpdateMacroMutationBody = MacroIn
+    export type UpdateMacroMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Update Macro
+ */
+export const useUpdateMacro = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMacro>>, TError,{macroId: number;data: MacroIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMacro>>,
+        TError,
+        {macroId: number;data: MacroIn},
+        TContext
+      > => {
+      return useMutation(getUpdateMacroMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Delete Macro
+ */
+export const deleteMacro = (
+    macroId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.delete(
+      `/api/support/admin/macros/${macroId}`,options
+    );
+  }
+
+
+
+
+export const getDeleteMacroMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMacro>>, TError,{macroId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMacro>>, TError,{macroId: number}, TContext> => {
+
+const mutationKey = ['deleteMacro'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMacro>>, {macroId: number}> = (props) => {
+          const {macroId} = props ?? {};
+
+          return  deleteMacro(macroId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMacroMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMacro>>>
+
+    export type DeleteMacroMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Delete Macro
+ */
+export const useDeleteMacro = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMacro>>, TError,{macroId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMacro>>,
+        TError,
+        {macroId: number},
+        TContext
+      > => {
+      return useMutation(getDeleteMacroMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Render Macro For Ticket
+ */
+export const renderMacroForTicket = (
+    macroId: number,
+    macroRenderIn: MacroRenderIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<RenderedTextOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/macros/${macroId}/render`,
+      macroRenderIn,options
+    );
+  }
+
+
+
+
+export const getRenderMacroForTicketMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renderMacroForTicket>>, TError,{macroId: number;data: MacroRenderIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof renderMacroForTicket>>, TError,{macroId: number;data: MacroRenderIn}, TContext> => {
+
+const mutationKey = ['renderMacroForTicket'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renderMacroForTicket>>, {macroId: number;data: MacroRenderIn}> = (props) => {
+          const {macroId,data} = props ?? {};
+
+          return  renderMacroForTicket(macroId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenderMacroForTicketMutationResult = NonNullable<Awaited<ReturnType<typeof renderMacroForTicket>>>
+    export type RenderMacroForTicketMutationBody = MacroRenderIn
+    export type RenderMacroForTicketMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Render Macro For Ticket
+ */
+export const useRenderMacroForTicket = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renderMacroForTicket>>, TError,{macroId: number;data: MacroRenderIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof renderMacroForTicket>>,
+        TError,
+        {macroId: number;data: MacroRenderIn},
+        TContext
+      > => {
+      return useMutation(getRenderMacroForTicketMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Ticket Presence
+ */
+export const ticketPresence = (
+    ticketId: number,
+    presenceIn: PresenceIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/tickets/${ticketId}/presence`,
+      presenceIn,options
+    );
+  }
+
+
+
+
+export const getTicketPresenceMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ticketPresence>>, TError,{ticketId: number;data: PresenceIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof ticketPresence>>, TError,{ticketId: number;data: PresenceIn}, TContext> => {
+
+const mutationKey = ['ticketPresence'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ticketPresence>>, {ticketId: number;data: PresenceIn}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  ticketPresence(ticketId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TicketPresenceMutationResult = NonNullable<Awaited<ReturnType<typeof ticketPresence>>>
+    export type TicketPresenceMutationBody = PresenceIn
+    export type TicketPresenceMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Ticket Presence
+ */
+export const useTicketPresence = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ticketPresence>>, TError,{ticketId: number;data: PresenceIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ticketPresence>>,
+        TError,
+        {ticketId: number;data: PresenceIn},
+        TContext
+      > => {
+      return useMutation(getTicketPresenceMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Ticket Action
+ */
+export const ticketAction = (
+    ticketId: number,
+    chatActionIn: ChatActionIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ActionResultOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/tickets/${ticketId}/action`,
+      chatActionIn,options
+    );
+  }
+
+
+
+
+export const getTicketActionMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ticketAction>>, TError,{ticketId: number;data: ChatActionIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof ticketAction>>, TError,{ticketId: number;data: ChatActionIn}, TContext> => {
+
+const mutationKey = ['ticketAction'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ticketAction>>, {ticketId: number;data: ChatActionIn}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  ticketAction(ticketId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TicketActionMutationResult = NonNullable<Awaited<ReturnType<typeof ticketAction>>>
+    export type TicketActionMutationBody = ChatActionIn
+    export type TicketActionMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Ticket Action
+ */
+export const useTicketAction = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ticketAction>>, TError,{ticketId: number;data: ChatActionIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ticketAction>>,
+        TError,
+        {ticketId: number;data: ChatActionIn},
+        TContext
+      > => {
+      return useMutation(getTicketActionMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List Approvals
+ */
+export const listApprovals = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ApprovalOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/support/admin/approvals`,options
+    );
+  }
+
+
+
+
+export const getListApprovalsQueryKey = () => {
+    return [
+    `/api/support/admin/approvals`
+    ] as const;
+    }
+
+
+export const getListApprovalsQueryOptions = <TData = Awaited<ReturnType<typeof listApprovals>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListApprovalsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listApprovals>>> = ({ signal }) => listApprovals({ signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListApprovalsQueryResult = NonNullable<Awaited<ReturnType<typeof listApprovals>>>
+export type ListApprovalsQueryError = AxiosError<unknown>
+
+
+export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovals>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovals>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listApprovals>>,
+          TError,
+          Awaited<ReturnType<typeof listApprovals>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Approvals
+ */
+
+export function useListApprovals<TData = Awaited<ReturnType<typeof listApprovals>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listApprovals>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListApprovalsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * @summary Approve Action
+ */
+export const approveAction = (
+    approvalId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/approvals/${approvalId}/approve`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getApproveActionMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveAction>>, TError,{approvalId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof approveAction>>, TError,{approvalId: number}, TContext> => {
+
+const mutationKey = ['approveAction'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveAction>>, {approvalId: number}> = (props) => {
+          const {approvalId} = props ?? {};
+
+          return  approveAction(approvalId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveActionMutationResult = NonNullable<Awaited<ReturnType<typeof approveAction>>>
+
+    export type ApproveActionMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Approve Action
+ */
+export const useApproveAction = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveAction>>, TError,{approvalId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof approveAction>>,
+        TError,
+        {approvalId: number},
+        TContext
+      > => {
+      return useMutation(getApproveActionMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Reject Action
+ */
+export const rejectAction = (
+    approvalId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/approvals/${approvalId}/reject`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getRejectActionMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAction>>, TError,{approvalId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectAction>>, TError,{approvalId: number}, TContext> => {
+
+const mutationKey = ['rejectAction'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectAction>>, {approvalId: number}> = (props) => {
+          const {approvalId} = props ?? {};
+
+          return  rejectAction(approvalId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RejectActionMutationResult = NonNullable<Awaited<ReturnType<typeof rejectAction>>>
+
+    export type RejectActionMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Reject Action
+ */
+export const useRejectAction = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectAction>>, TError,{approvalId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof rejectAction>>,
+        TError,
+        {approvalId: number},
+        TContext
+      > => {
+      return useMutation(getRejectActionMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Impersonate User
+ */
+export const impersonateUser = (
+    userId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<ImpersonateOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/impersonate/${userId}`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getImpersonateUserMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonateUser>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof impersonateUser>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['impersonateUser'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof impersonateUser>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  impersonateUser(userId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImpersonateUserMutationResult = NonNullable<Awaited<ReturnType<typeof impersonateUser>>>
+
+    export type ImpersonateUserMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Impersonate User
+ */
+export const useImpersonateUser = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof impersonateUser>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof impersonateUser>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getImpersonateUserMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary End Impersonation
+ */
+export const endImpersonation = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/impersonate/end`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getEndImpersonationMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof endImpersonation>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof endImpersonation>>, TError,void, TContext> => {
+
+const mutationKey = ['endImpersonation'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof endImpersonation>>, void> = () => {
+
+
+          return  endImpersonation(axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EndImpersonationMutationResult = NonNullable<Awaited<ReturnType<typeof endImpersonation>>>
+
+    export type EndImpersonationMutationError = AxiosError<unknown>
+
+    /**
+ * @summary End Impersonation
+ */
+export const useEndImpersonation = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof endImpersonation>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof endImpersonation>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getEndImpersonationMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List Audit Log
+ */
+export const listAuditLog = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AuditLogOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/support/admin/audit`,options
+    );
+  }
+
+
+
+
+export const getListAuditLogQueryKey = () => {
+    return [
+    `/api/support/admin/audit`
+    ] as const;
+    }
+
+
+export const getListAuditLogQueryOptions = <TData = Awaited<ReturnType<typeof listAuditLog>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLog>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAuditLogQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAuditLog>>> = ({ signal }) => listAuditLog({ signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAuditLog>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAuditLogQueryResult = NonNullable<Awaited<ReturnType<typeof listAuditLog>>>
+export type ListAuditLogQueryError = AxiosError<unknown>
+
+
+export function useListAuditLog<TData = Awaited<ReturnType<typeof listAuditLog>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLog>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAuditLog>>,
+          TError,
+          Awaited<ReturnType<typeof listAuditLog>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAuditLog<TData = Awaited<ReturnType<typeof listAuditLog>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLog>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAuditLog>>,
+          TError,
+          Awaited<ReturnType<typeof listAuditLog>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAuditLog<TData = Awaited<ReturnType<typeof listAuditLog>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLog>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Audit Log
+ */
+
+export function useListAuditLog<TData = Awaited<ReturnType<typeof listAuditLog>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAuditLog>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAuditLogQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * @summary Cancel Bonus
+ */
+export const cancelBonus = (
+    ticketId: number,
+    cancelBonusIn: CancelBonusIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AdminTicketDetailOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/tickets/${ticketId}/cancel-bonus`,
+      cancelBonusIn,options
+    );
+  }
+
+
+
+
+export const getCancelBonusMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelBonus>>, TError,{ticketId: number;data: CancelBonusIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelBonus>>, TError,{ticketId: number;data: CancelBonusIn}, TContext> => {
+
+const mutationKey = ['cancelBonus'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelBonus>>, {ticketId: number;data: CancelBonusIn}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  cancelBonus(ticketId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelBonusMutationResult = NonNullable<Awaited<ReturnType<typeof cancelBonus>>>
+    export type CancelBonusMutationBody = CancelBonusIn
+    export type CancelBonusMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Cancel Bonus
+ */
+export const useCancelBonus = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelBonus>>, TError,{ticketId: number;data: CancelBonusIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof cancelBonus>>,
+        TError,
+        {ticketId: number;data: CancelBonusIn},
+        TContext
+      > => {
+      return useMutation(getCancelBonusMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary List Staff
+ */
+export const listStaff = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<StaffDossierOut[]>> => {
+
+
+    return axios.default.get(
+      `/api/support/admin/staff`,options
+    );
+  }
+
+
+
+
+export const getListStaffQueryKey = () => {
+    return [
+    `/api/support/admin/staff`
+    ] as const;
+    }
+
+
+export const getListStaffQueryOptions = <TData = Awaited<ReturnType<typeof listStaff>>, TError = AxiosError<unknown>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>>, axios?: AxiosRequestConfig}
+) => {
+
+const {query: queryOptions, axios: axiosOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListStaffQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStaff>>> = ({ signal }) => listStaff({ signal, ...axiosOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListStaffQueryResult = NonNullable<Awaited<ReturnType<typeof listStaff>>>
+export type ListStaffQueryError = AxiosError<unknown>
+
+
+export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = AxiosError<unknown>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listStaff>>,
+          TError,
+          Awaited<ReturnType<typeof listStaff>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listStaff>>,
+          TError,
+          Awaited<ReturnType<typeof listStaff>>
+        > , 'initialData'
+      >, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Staff
+ */
+
+export function useListStaff<TData = Awaited<ReturnType<typeof listStaff>>, TError = AxiosError<unknown>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaff>>, TError, TData>>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListStaffQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * @summary Block Staff
+ */
+export const blockStaff = (
+    userId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/staff/${userId}/block`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getBlockStaffMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockStaff>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof blockStaff>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['blockStaff'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof blockStaff>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  blockStaff(userId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BlockStaffMutationResult = NonNullable<Awaited<ReturnType<typeof blockStaff>>>
+
+    export type BlockStaffMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Block Staff
+ */
+export const useBlockStaff = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockStaff>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof blockStaff>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getBlockStaffMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Unblock Staff
+ */
+export const unblockStaff = (
+    userId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/staff/${userId}/unblock`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getUnblockStaffMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockStaff>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof unblockStaff>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['unblockStaff'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unblockStaff>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  unblockStaff(userId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnblockStaffMutationResult = NonNullable<Awaited<ReturnType<typeof unblockStaff>>>
+
+    export type UnblockStaffMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Unblock Staff
+ */
+export const useUnblockStaff = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockStaff>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof unblockStaff>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getUnblockStaffMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Block User
+ */
+export const blockUser = (
+    userId: number,
+    blockUserIn: BlockUserIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/users/${userId}/block`,
+      blockUserIn,options
+    );
+  }
+
+
+
+
+export const getBlockUserMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockUser>>, TError,{userId: number;data: BlockUserIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof blockUser>>, TError,{userId: number;data: BlockUserIn}, TContext> => {
+
+const mutationKey = ['blockUser'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof blockUser>>, {userId: number;data: BlockUserIn}> = (props) => {
+          const {userId,data} = props ?? {};
+
+          return  blockUser(userId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BlockUserMutationResult = NonNullable<Awaited<ReturnType<typeof blockUser>>>
+    export type BlockUserMutationBody = BlockUserIn
+    export type BlockUserMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Block User
+ */
+export const useBlockUser = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof blockUser>>, TError,{userId: number;data: BlockUserIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof blockUser>>,
+        TError,
+        {userId: number;data: BlockUserIn},
+        TContext
+      > => {
+      return useMutation(getBlockUserMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Unblock User
+ */
+export const unblockUser = (
+    userId: number, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/users/${userId}/unblock`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getUnblockUserMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockUser>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof unblockUser>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['unblockUser'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof unblockUser>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  unblockUser(userId,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UnblockUserMutationResult = NonNullable<Awaited<ReturnType<typeof unblockUser>>>
+
+    export type UnblockUserMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Unblock User
+ */
+export const useUnblockUser = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof unblockUser>>, TError,{userId: number}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof unblockUser>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getUnblockUserMutationOptions(options), queryClient);
     }

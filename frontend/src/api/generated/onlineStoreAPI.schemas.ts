@@ -141,12 +141,14 @@ export interface CheckoutIn {
 export interface UserOut {
   id: number;
   username: string;
+  first_name?: string;
   email: string;
   is_2fa_enabled?: boolean;
   preferred_2fa_method?: string;
   telegram_linked?: boolean;
   bonus_balance?: number;
   is_staff?: boolean;
+  is_superuser?: boolean;
 }
 
 export interface AuthResult {
@@ -233,6 +235,7 @@ export interface UserChatMessageOut {
   sender: string;
   author_name: string;
   text: string;
+  is_system?: boolean;
   created_at: string;
 }
 
@@ -262,22 +265,45 @@ export interface AdminTicketOut {
   subject: string;
   updated_at: string;
   unread_count?: number;
+  is_overdue?: boolean;
 }
+
+export type AdminChatMessageOutMeta = { [key: string]: unknown };
 
 export interface AdminChatMessageOut {
   id: number;
   sender_username: string;
   sender_name: string;
   from_staff: boolean;
+  is_system?: boolean;
+  meta?: AdminChatMessageOutMeta;
   text: string;
   created_at: string;
 }
 
+export interface CustomerTagOut {
+  id: number;
+  label: string;
+  color: string;
+}
+
+export interface TicketPresenceOut {
+  staff_username: string;
+  staff_name: string;
+  state: string;
+}
+
 export interface AdminTicketDetailOut {
   id: number;
+  user_id: number;
   user_username: string;
+  customer_name: string;
+  customer_blocked?: boolean;
   status: string;
+  is_overdue?: boolean;
   messages: AdminChatMessageOut[];
+  tags: CustomerTagOut[];
+  viewers: TicketPresenceOut[];
 }
 
 export interface CustomerOrderOut {
@@ -309,11 +335,110 @@ export interface TaggedCommentOut {
   replies: ReviewReplyOut[];
 }
 
+export interface TagCreateIn {
+  label: string;
+  color?: string;
+}
+
+export interface AssignTagIn {
+  tag_id: number;
+}
+
+export interface MacroOut {
+  id: number;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MacroIn {
+  title: string;
+  content: string;
+}
+
+export interface RenderedTextOut {
+  content: string;
+}
+
+export interface MacroRenderIn {
+  ticket_id: number;
+}
+
+export interface PresenceIn {
+  state?: string;
+}
+
+export interface ActionResultOut {
+  ok: boolean;
+  pending?: boolean;
+}
+
+export interface ChatActionIn {
+  type: string;
+  amount?: number;
+  percent?: number;
+}
+
+export interface ApprovalOut {
+  id: number;
+  requested_by: string;
+  ticket_id: number;
+  customer_name: string;
+  action_type: string;
+  amount: number;
+  percent: number;
+  created_at: string;
+}
+
+export interface ImpersonateOut {
+  access: string;
+  target_username: string;
+  target_name: string;
+}
+
+export type AuditLogOutMeta = { [key: string]: unknown };
+
+export interface AuditLogOut {
+  id: number;
+  admin_username: string;
+  action_type: string;
+  target_username?: string | null;
+  ticket_id?: number | null;
+  meta: AuditLogOutMeta;
+  created_at: string;
+}
+
+export interface CancelBonusIn {
+  message_id: number;
+}
+
+export interface StaffDossierOut {
+  id: number;
+  username: string;
+  name: string;
+  role: string;
+  is_active: boolean;
+  resolved_tickets: number;
+  comments_resolved: number;
+  ratings_total: number;
+  positive_rate?: number | null;
+}
+
+export interface BlockUserIn {
+  permanent?: boolean;
+  days?: number;
+}
+
 export type ListProductsParams = {
 q?: string | null;
 };
 
 export type GetSuggestionsParams = {
 q?: string;
+};
+
+export type ListTicketsParams = {
+archived?: boolean;
 };
 
