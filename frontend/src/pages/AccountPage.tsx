@@ -16,11 +16,14 @@ const TABS = [
   { key: 'security', label: 'Безпека & 2FA' },
 ]
 
+// Support staff use a stripped-down account: no buyer-centric tabs (orders,
+// viewing history, own reviews) or bonuses — their work lives in the Helpdesk.
+const STAFF_TAB_KEYS = new Set(['profile', 'security'])
+
 export function AccountPage() {
   const navigate = useNavigate()
   const { user, isLoading, logout } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  const active = searchParams.get('tab') ?? 'profile'
 
   useEffect(() => {
     if (!isLoading && !user) navigate('/login')
@@ -28,6 +31,11 @@ export function AccountPage() {
 
   if (isLoading) return <p className="p-6 text-gray-500">Завантаження…</p>
   if (!user) return null
+
+  const tabs = user.is_staff ? TABS.filter((t) => STAFF_TAB_KEYS.has(t.key)) : TABS
+  const requested = searchParams.get('tab') ?? 'profile'
+  // Fall back to the first visible tab if the URL asks for a hidden one.
+  const active = tabs.some((t) => t.key === requested) ? requested : tabs[0].key
 
   const selectTab = (key: string) =>
     setSearchParams((prev) => {
@@ -51,7 +59,16 @@ export function AccountPage() {
           <p className="text-sm text-gray-500">{user.email || user.username}</p>
         </div>
         <div className="sm:w-64">
-          <BonusCard balance={user.bonus_balance ?? 0} />
+          {user.is_staff ? (
+            <Link
+              to="/support/admin"
+              className="flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-700"
+            >
+              Відкрити панель підтримки →
+            </Link>
+          ) : (
+            <BonusCard balance={user.bonus_balance ?? 0} />
+          )}
         </div>
       </div>
 
@@ -59,7 +76,7 @@ export function AccountPage() {
         {/* Sidebar nav */}
         <aside className="md:w-56 md:shrink-0">
           <nav className="flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
@@ -73,10 +90,19 @@ export function AccountPage() {
                 {tab.label}
               </button>
             ))}
+            {/* Customers reach their own chat here; staff use the Helpdesk. */}
+            {!user.is_staff && (
+              <Link
+                to="/me/support"
+                className="whitespace-nowrap rounded-md px-3 py-2 text-left text-sm text-gray-600 transition hover:bg-gray-50 hover:text-gray-900 md:mt-2 md:border-t md:border-gray-100 md:pt-3"
+              >
+                Підтримка
+              </Link>
+            )}
             {user.is_staff && (
               <Link
                 to="/support/admin"
-                className="whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-medium text-red-700 transition hover:bg-red-50 md:mt-2 md:border-t md:border-gray-100 md:pt-3"
+                className="whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-medium text-red-700 transition hover:bg-red-50"
               >
                 Панель підтримки
               </Link>

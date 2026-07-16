@@ -40,6 +40,7 @@ class ReviewOut(Schema):
 class ReviewIn(Schema):
     rating: int
     text: str = ""
+    needs_support: bool = False  # "Потребує відповіді підтримки"
 
 
 class ReplyIn(Schema):

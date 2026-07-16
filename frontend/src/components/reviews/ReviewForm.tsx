@@ -20,6 +20,7 @@ export function ReviewForm({
   const queryClient = useQueryClient()
   const [rating, setRating] = useState(existing?.rating ?? 0)
   const [text, setText] = useState(existing?.text ?? '')
+  const [needsSupport, setNeedsSupport] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,7 +33,7 @@ export function ReviewForm({
     setError(null)
     setBusy(true)
     try {
-      await createReview(productId, { rating, text })
+      await createReview(productId, { rating, text, needs_support: needsSupport })
       // Refresh the list, the product (its average changed), and my-reviews.
       queryClient.invalidateQueries({ queryKey: getGetProductReviewsQueryKey(productId) })
       queryClient.invalidateQueries({ queryKey: getGetProductQueryKey(slug) })
@@ -57,6 +58,15 @@ export function ReviewForm({
         placeholder="Поділіться враженнями про товар…"
         className="mt-3 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
       />
+      <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          checked={needsSupport}
+          onChange={(e) => setNeedsSupport(e.target.checked)}
+          className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
+        />
+        Потребує відповіді підтримки
+      </label>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       <button
         type="submit"

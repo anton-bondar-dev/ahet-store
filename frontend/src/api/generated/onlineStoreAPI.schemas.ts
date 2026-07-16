@@ -68,6 +68,7 @@ export interface ReviewOut {
 export interface ReviewIn {
   rating: number;
   text?: string;
+  needs_support?: boolean;
 }
 
 export interface CartItemOut {
@@ -239,10 +240,19 @@ export interface UserChatOut {
   ticket_id: number;
   status: string;
   messages: UserChatMessageOut[];
+  can_rate?: boolean;
 }
 
 export interface ChatMessageIn {
   text: string;
+}
+
+export interface OkOut {
+  ok: boolean;
+}
+
+export interface RatingIn {
+  is_positive: boolean;
 }
 
 export interface AdminTicketOut {
@@ -268,6 +278,35 @@ export interface AdminTicketDetailOut {
   user_username: string;
   status: string;
   messages: AdminChatMessageOut[];
+}
+
+export interface CustomerOrderOut {
+  id: number;
+  status: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_price: string;
+  item_count: number;
+  created_at: string;
+}
+
+export interface StaffMetricsOut {
+  resolved_tickets: number;
+  comments_resolved: number;
+  ratings_total: number;
+  ratings_positive: number;
+  positive_rate?: number | null;
+}
+
+export interface TaggedCommentOut {
+  id: number;
+  product_title: string;
+  product_slug: string;
+  author_name: string;
+  rating: number;
+  text: string;
+  support_status: string;
+  created_at: string;
+  replies: ReviewReplyOut[];
 }
 
 export type ListProductsParams = {

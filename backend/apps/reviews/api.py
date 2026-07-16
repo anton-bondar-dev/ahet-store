@@ -5,6 +5,7 @@ from ninja import Router
 from ninja_jwt.authentication import JWTAuth
 
 from apps.catalog.models import Product
+from apps.core.permissions import forbid_staff
 
 from .models import Review, ReviewReply
 from .schemas import ReplyIn, ReviewIn, ReviewOut, ReviewReplyOut
@@ -48,12 +49,22 @@ def get_product_reviews(request, product_id: int):
     operation_id="create_review",
 )
 def create_review(request, product_id: int, payload: ReviewIn):
+    # Staff can reply to reviews (their job) but never author their own.
+    forbid_staff(request.auth)
     product = get_object_or_404(Product, id=product_id)
     rating = max(1, min(payload.rating, 5))
+    defaults = {
+        "rating": rating,
+        "text": payload.text,
+        "needs_support": payload.needs_support,
+    }
+    # (Re)flagging puts the review back into the pending support queue.
+    if payload.needs_support:
+        defaults["support_status"] = Review.SUPPORT_PENDING
     Review.objects.update_or_create(
         user=request.auth,
         product=product,
-        defaults={"rating": rating, "text": payload.text},
+        defaults=defaults,
     )
     product.recompute_rating()
     # Return the caller's review with its replies prefetched.
