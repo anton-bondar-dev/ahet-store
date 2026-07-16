@@ -86,17 +86,27 @@ def checkout(request, payload: CheckoutIn):
         OrderItem.objects.bulk_create(order_items)
         Product.objects.bulk_update(locked.values(), ["stock"])
 
-        # Bonuses: spend (capped) then earn — authenticated buyers only.
-        subtotal = total_price  # Σ effective_price × qty, before bonus
+        # Money order: subtotal → coupon discount → bonus cap on the remainder.
+        subtotal = total_price  # Σ effective_price × qty
+        coupon = cart.coupon
+        coupon_discount = Decimal("0.00")
+        if coupon and coupon.is_valid(subtotal):
+            coupon_discount = coupon.discount_for(subtotal)
+            coupon.used_count += 1
+            coupon.save(update_fields=["used_count"])
+        else:
+            coupon = None
+        after_coupon = subtotal - coupon_discount
+
         bonus_earned = sum(
             locked[item.product_id].bonus_amount * item.quantity for item in items
         )
         applied = 0
         if user is not None:
             profile, _ = Profile.objects.get_or_create(user=user)
-            # Cap: 75% of the subtotal at ≥500 UAH, else 50%; and by the balance.
-            pct = Decimal("0.75") if subtotal >= 500 else Decimal("0.50")
-            max_applicable = int(subtotal * pct)  # floor → integer UAH
+            # Cap: 75% of the post-coupon amount at ≥500 UAH, else 50%; and by the balance.
+            pct = Decimal("0.75") if after_coupon >= 500 else Decimal("0.50")
+            max_applicable = int(after_coupon * pct)  # floor → integer UAH
             applied = max(
                 0, min(payload.applied_bonuses, max_applicable, profile.bonus_balance)
             )
@@ -108,10 +118,14 @@ def checkout(request, payload: CheckoutIn):
         else:
             bonus_earned = 0
 
-        order.total_price = subtotal - applied  # amount actually due
+        order.total_price = after_coupon - applied  # amount actually due
         order.bonus_earned = bonus_earned
         order.applied_bonuses = applied
-        order.save(update_fields=["total_price", "bonus_earned", "applied_bonuses"])
+        order.coupon = coupon
+        order.coupon_discount = coupon_discount
+        order.save(update_fields=[
+            "total_price", "bonus_earned", "applied_bonuses", "coupon", "coupon_discount",
+        ])
 
         cart.items.all().delete()
 

@@ -9,6 +9,10 @@ class Cart(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, blank=True, null=True, related_name="carts"
     )
+    # Applied discount coupon, if any (validated when attached; consumed at checkout).
+    coupon = models.ForeignKey(
+        "coupons.Coupon", on_delete=models.SET_NULL, blank=True, null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

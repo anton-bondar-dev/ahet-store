@@ -7,6 +7,7 @@ from apps.catalog.api import router as catalog_router
 from apps.catalog.viewed_api import router as viewed_router
 from apps.orders.api import router as orders_router
 from apps.reviews.api import router as reviews_router
+from apps.support.api import router as support_router
 
 api = NinjaAPI(title="Online Store API", version="1.0.0")
 
@@ -28,3 +29,4 @@ api.add_router("/cart", cart_router)
 api.add_router("/orders", orders_router)
 api.add_router("/auth", accounts_router)
 api.add_router("/accounts", profile_router)
+api.add_router("/support", support_router)

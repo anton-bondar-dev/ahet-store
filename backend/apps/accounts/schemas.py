@@ -22,6 +22,11 @@ class UserOut(Schema):
     preferred_2fa_method: str = "none"
     telegram_linked: bool = False
     bonus_balance: int = 0
+    is_staff: bool = False
+
+    @staticmethod
+    def resolve_is_staff(obj):
+        return bool(obj.is_staff or obj.is_superuser)
 
     @staticmethod
     def resolve_is_2fa_enabled(obj):

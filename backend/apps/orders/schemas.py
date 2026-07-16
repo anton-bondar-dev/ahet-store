@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import List
+from typing import List, Optional
 
 from ninja import Schema
 
@@ -32,6 +32,8 @@ class OrderOut(Schema):
     total_price: Decimal
     bonus_earned: int
     applied_bonuses: int
+    coupon_code: Optional[str] = None
+    coupon_discount: Decimal
     created_at: datetime
     items: List[OrderItemOut]
 
@@ -41,3 +43,8 @@ class OrderOut(Schema):
 
         status = obj["status"] if isinstance(obj, dict) else obj.status
         return STATUS_LABELS_UK.get(status, status)
+
+    @staticmethod
+    def resolve_coupon_code(obj):
+        coupon = getattr(obj, "coupon", None)
+        return coupon.code if coupon else None
