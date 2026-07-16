@@ -10,7 +10,9 @@ class ReviewReplyInline(admin.TabularInline):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ("id", "product", "user", "rating", "created_at")
-    list_filter = ("rating",)
+    list_display = (
+        "id", "product", "user", "rating", "needs_support", "support_status", "created_at",
+    )
+    list_filter = ("rating", "needs_support", "support_status")
     search_fields = ("product__title", "user__username", "text")
     inlines = [ReviewReplyInline]

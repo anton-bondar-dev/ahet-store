@@ -15,6 +15,24 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Support tagging: the author can flag a review as needing a help-desk reply
+    # (e.g. a defect report). Flagged + pending reviews form the admin queue.
+    SUPPORT_PENDING = "pending"
+    SUPPORT_RESOLVED = "resolved"
+    SUPPORT_STATUS_CHOICES = [
+        (SUPPORT_PENDING, "Pending"),
+        (SUPPORT_RESOLVED, "Resolved"),
+    ]
+    needs_support = models.BooleanField(default=False)
+    support_status = models.CharField(
+        max_length=10, choices=SUPPORT_STATUS_CHOICES, default=SUPPORT_PENDING
+    )
+    support_resolved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="resolved_reviews",
+    )
+    support_resolved_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         verbose_name = "Review"
         verbose_name_plural = "Reviews"
