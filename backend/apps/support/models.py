@@ -31,6 +31,19 @@ class SupportTicket(models.Model):
     STATUS_CLOSED = "closed"
     STATUS_CHOICES = [(STATUS_OPEN, "Open"), (STATUS_CLOSED, "Closed")]
 
+    PRIORITY_LOW = "low"
+    PRIORITY_NORMAL = "normal"
+    PRIORITY_HIGH = "high"
+    PRIORITY_URGENT = "urgent"
+    PRIORITY_CHOICES = [
+        (PRIORITY_LOW, "Low"),
+        (PRIORITY_NORMAL, "Normal"),
+        (PRIORITY_HIGH, "High"),
+        (PRIORITY_URGENT, "Urgent"),
+    ]
+    # Higher weight floats to the top of the queue.
+    PRIORITY_RANK = {PRIORITY_URGENT: 0, PRIORITY_HIGH: 1, PRIORITY_NORMAL: 2, PRIORITY_LOW: 3}
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="support_tickets")
     subject = models.CharField(max_length=255, blank=True, default="")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_OPEN)
@@ -43,6 +56,14 @@ class SupportTicket(models.Model):
         related_name="closed_tickets",
     )
     closed_at = models.DateTimeField(null=True, blank=True)
+    # The operator handling this ticket ("Assign to me" / lead assignment).
+    assigned_to = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="assigned_tickets",
+    )
+    priority = models.CharField(
+        max_length=10, choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL
+    )
     # SLA tracking: stamped as messages arrive, so "overdue" is derived cheaply.
     last_user_message_at = models.DateTimeField(null=True, blank=True)
     last_staff_message_at = models.DateTimeField(null=True, blank=True)
@@ -88,6 +109,9 @@ class ChatMessage(models.Model):
     # system notice, with `meta` carrying the structured action for the UI.
     is_system = models.BooleanField(default=False)
     meta = models.JSONField(default=dict, blank=True)
+    # Internal staff note — visible only in the workspace, never sent to the
+    # customer API.
+    is_internal = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Chat message"

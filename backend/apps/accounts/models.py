@@ -1,13 +1,25 @@
+import secrets
 import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
+
+# Unambiguous alphabet for the short customer support id (no 0/O/1/I).
+_SUPPORT_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def generate_support_id() -> str:
+    return "USR-" + "".join(secrets.choice(_SUPPORT_ID_ALPHABET) for _ in range(4))
 
 
 class Profile(models.Model):
     METHOD_NONE = "none"
     METHOD_TELEGRAM = "telegram"
     METHOD_EMAIL = "email"
+
+    STATUS_ONLINE = "online"
+    STATUS_AWAY = "away"
+    OPERATOR_STATUS_CHOICES = [(STATUS_ONLINE, "Online"), (STATUS_AWAY, "Away")]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     # Telegram second-factor binding. When telegram_chat_id is set, login
@@ -35,6 +47,33 @@ class Profile(models.Model):
     # actions with 403.
     blocked_until = models.DateTimeField(null=True, blank=True)
     blocked_permanent = models.BooleanField(default=False)
+
+    # Short customer identifier for staff (e.g. USR-7B2X) — hidden from the
+    # customer, shown in the Helpdesk sidebar/dossier and searchable there.
+    support_id = models.CharField(
+        max_length=12, unique=True, null=True, blank=True, db_index=True
+    )
+    # Operator availability, toggled from the workspace and shown in the dossier.
+    operator_status = models.CharField(
+        max_length=10, choices=OPERATOR_STATUS_CHOICES, default=STATUS_ONLINE
+    )
+
+    # Rotated by "log out everywhere"; embedded in issued JWTs and checked on
+    # every request, so old tokens stop working the moment it changes.
+    security_stamp = models.UUIDField(default=uuid.uuid4, editable=False)
+
+    # Presence: refreshed (throttled) on authenticated requests.
+    last_seen_at = models.DateTimeField(null=True, blank=True)
+    last_user_agent = models.CharField(max_length=400, blank=True, default="")
+
+    def save(self, *args, **kwargs):
+        if not self.support_id:
+            for _ in range(20):
+                candidate = generate_support_id()
+                if not Profile.objects.filter(support_id=candidate).exists():
+                    self.support_id = candidate
+                    break
+        super().save(*args, **kwargs)
 
     @property
     def is_blocked(self) -> bool:
