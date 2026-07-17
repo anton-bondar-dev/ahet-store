@@ -262,6 +262,7 @@ export interface UserChatOut {
   status: string;
   messages: UserChatMessageOut[];
   can_rate?: boolean;
+  unread_count?: number;
 }
 
 export interface ChatMessageIn {

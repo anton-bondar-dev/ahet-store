@@ -54,6 +54,10 @@ class UserChatOut(Schema):
     # True when the latest ticket is closed and hasn't been rated yet → the
     # frontend shows the end-of-chat 👍/👎 prompt.
     can_rate: bool = False
+    # Support replies the user hasn't opened yet. Drives the widget's unread
+    # badge/chime; cleared only when the user actually views the chat (POST
+    # /messages/read), so it survives reloads and other devices.
+    unread_count: int = 0
 
 
 # --- Admin-facing (real staff identities) ------------------------------------

@@ -11,6 +11,9 @@ export function UserChatPanel({
   onSend,
   canRate = false,
   onRate,
+  status = 'none',
+  onEnd,
+  ending = false,
 }: {
   messages: UserChatMessageOut[]
   isLoading: boolean
@@ -18,9 +21,21 @@ export function UserChatPanel({
   onSend: (text: string) => Promise<unknown>
   canRate?: boolean
   onRate?: (isPositive: boolean) => Promise<unknown>
+  status?: string
+  onEnd?: () => Promise<unknown>
+  ending?: boolean
 }) {
   const [text, setText] = useState('')
+  const [confirmEnd, setConfirmEnd] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
+
+  const handleEnd = async () => {
+    try {
+      await onEnd?.()
+    } finally {
+      setConfirmEnd(false)
+    }
+  }
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight
@@ -39,6 +54,41 @@ export function UserChatPanel({
 
   return (
     <>
+      {/* End-chat control — only while there's an active (open) conversation. */}
+      {status === 'open' && onEnd && (
+        <div className="flex items-center justify-end border-b border-gray-100 bg-white px-3 py-1.5">
+          {confirmEnd ? (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-gray-500">Завершити чат?</span>
+              <button
+                type="button"
+                onClick={handleEnd}
+                disabled={ending}
+                className="font-semibold text-red-600 transition hover:underline disabled:opacity-50"
+              >
+                Так
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmEnd(false)}
+                disabled={ending}
+                className="text-gray-500 transition hover:underline"
+              >
+                Скасувати
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmEnd(true)}
+              className="text-xs font-medium text-gray-500 transition hover:text-gray-800"
+            >
+              Завершити чат
+            </button>
+          )}
+        </div>
+      )}
+
       <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto bg-gray-50 px-3 py-3">
         {isLoading ? (
           <p className="mt-6 text-center text-sm text-gray-400">Завантаження…</p>

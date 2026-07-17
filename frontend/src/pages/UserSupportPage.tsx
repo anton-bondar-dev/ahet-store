@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { UserChatPanel } from '../components/support/UserChatPanel'
 import { useAuth } from '../hooks/useAuth'
@@ -12,11 +12,30 @@ export function UserSupportPage() {
   const navigate = useNavigate()
   const { user, isLoading: authLoading } = useAuth()
   const isStaff = useIsStaff()
-  const { messages, isLoading, sending, send, canRate, rate } = useSupportChat(4000)
+  const {
+    messages,
+    isLoading,
+    sending,
+    send,
+    canRate,
+    rate,
+    status,
+    unreadCount,
+    endChat,
+    ending,
+    markRead,
+  } = useSupportChat(4000)
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login')
   }, [authLoading, user, navigate])
+
+  // This is a dedicated, actively-focused view, so seeing it clears the alert.
+  const markReadRef = useRef(markRead)
+  markReadRef.current = markRead
+  useEffect(() => {
+    if (unreadCount > 0) markReadRef.current().catch(() => {})
+  }, [unreadCount])
 
   if (authLoading) return <p className="p-6 text-gray-500">Завантаження…</p>
   if (!user) return null
@@ -49,6 +68,9 @@ export function UserSupportPage() {
           onSend={send}
           canRate={canRate}
           onRate={rate}
+          status={status}
+          onEnd={endChat}
+          ending={ending}
         />
       </div>
     </div>

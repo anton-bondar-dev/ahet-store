@@ -108,6 +108,29 @@ def _support_admin():
 
 
 # --- User side (masked) -------------------------------------------------------
+def _user_chat_payload(ticket) -> dict:
+    """Serialize a ticket for the customer widget. Read-only — marking messages
+    read is a separate explicit action (POST /messages/read) so background
+    polling never silently dismisses an unread reply."""
+    can_rate = (
+        ticket.status == SupportTicket.STATUS_CLOSED
+        and not SupportRating.objects.filter(ticket_id=ticket.id).exists()
+    )
+    visible = ticket.messages.exclude(is_internal=True).select_related("sender")
+    # Unread = staff replies the user hasn't opened yet (internal notes already
+    # excluded from the customer thread, so they never count).
+    unread = ticket.messages.filter(
+        from_staff=True, read_by_user=False, is_internal=False
+    ).count()
+    return {
+        "ticket_id": ticket.id,
+        "status": ticket.status,
+        "messages": list(visible.all()),
+        "can_rate": can_rate,
+        "unread_count": unread,
+    }
+
+
 @router.get("/messages", response=UserChatOut, auth=JWTAuth(), operation_id="get_my_chat")
 def get_my_chat(request):
     ticket = _user_latest_ticket(request.auth)
@@ -116,22 +139,45 @@ def get_my_chat(request):
         # ticket here) keeps this endpoint side-effect free, so the widget can
         # poll it for notifications without spawning empty tickets — the ticket
         # is created only when the user actually sends their first message.
-        return {"ticket_id": 0, "status": "none", "messages": [], "can_rate": False}
-    # Seeing the thread marks staff messages as read by the user.
-    ticket.messages.filter(from_staff=True, read_by_user=False).update(read_by_user=True)
-    can_rate = (
-        ticket.status == SupportTicket.STATUS_CLOSED
-        and not SupportRating.objects.filter(ticket_id=ticket.id).exists()
+        return {
+            "ticket_id": 0, "status": "none", "messages": [],
+            "can_rate": False, "unread_count": 0,
+        }
+    return _user_chat_payload(ticket)
+
+
+@router.post("/messages/read", response=OkOut, auth=JWTAuth(), operation_id="mark_my_chat_read")
+def mark_my_chat_read(request):
+    # Called when the customer actually opens/views the chat — this (not polling)
+    # is what clears the unread badge, and it persists so the alert stays gone.
+    forbid_staff(request.auth)
+    ticket = _user_latest_ticket(request.auth)
+    if ticket is not None:
+        ticket.messages.filter(from_staff=True, read_by_user=False).update(
+            read_by_user=True
+        )
+    return {"ok": True}
+
+
+@router.post("/close", response=UserChatOut, auth=JWTAuth(), operation_id="close_my_chat")
+def close_my_chat(request):
+    # The customer ends their own conversation. Credit the handling operator (if
+    # one was assigned) so the end-of-chat rating still attributes correctly.
+    forbid_staff(request.auth)
+    ticket = _user_open_ticket(request.auth)
+    if ticket is None:
+        raise HttpError(400, "Немає активного звернення")
+    ticket.status = SupportTicket.STATUS_CLOSED
+    ticket.closed_by = ticket.assigned_to
+    ticket.closed_at = timezone.now()
+    ticket.save(update_fields=["status", "closed_by", "closed_at", "updated_at"])
+    # Neutral system notice so both the customer thread and the operator's
+    # archive show the conversation was ended by the customer.
+    ChatMessage.objects.create(
+        ticket=ticket, sender=request.auth, from_staff=False, is_system=True,
+        text="Чат завершено користувачем.", read_by_staff=True,
     )
-    return {
-        "ticket_id": ticket.id,
-        "status": ticket.status,
-        # Internal staff notes are never exposed to the customer.
-        "messages": list(
-            ticket.messages.exclude(is_internal=True).select_related("sender").all()
-        ),
-        "can_rate": can_rate,
-    }
+    return _user_chat_payload(ticket)
 
 
 @router.post("/rating", response=OkOut, auth=JWTAuth(), operation_id="rate_support")

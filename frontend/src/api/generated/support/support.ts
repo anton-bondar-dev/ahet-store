@@ -234,6 +234,128 @@ export const useSendMyMessage = <TError = AxiosError<unknown>,
       return useMutation(getSendMyMessageMutationOptions(options), queryClient);
     }
     /**
+ * @summary Mark My Chat Read
+ */
+export const markMyChatRead = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/messages/read`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getMarkMyChatReadMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markMyChatRead>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof markMyChatRead>>, TError,void, TContext> => {
+
+const mutationKey = ['markMyChatRead'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markMyChatRead>>, void> = () => {
+
+
+          return  markMyChatRead(axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkMyChatReadMutationResult = NonNullable<Awaited<ReturnType<typeof markMyChatRead>>>
+
+    export type MarkMyChatReadMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Mark My Chat Read
+ */
+export const useMarkMyChatRead = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markMyChatRead>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof markMyChatRead>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getMarkMyChatReadMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Close My Chat
+ */
+export const closeMyChat = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<UserChatOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/close`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getCloseMyChatMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeMyChat>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof closeMyChat>>, TError,void, TContext> => {
+
+const mutationKey = ['closeMyChat'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof closeMyChat>>, void> = () => {
+
+
+          return  closeMyChat(axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CloseMyChatMutationResult = NonNullable<Awaited<ReturnType<typeof closeMyChat>>>
+
+    export type CloseMyChatMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Close My Chat
+ */
+export const useCloseMyChat = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof closeMyChat>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof closeMyChat>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCloseMyChatMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Rate Support
  */
 export const rateSupport = (

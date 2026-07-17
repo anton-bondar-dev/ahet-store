@@ -18,7 +18,6 @@ function readOpen(): boolean {
 
 export function SupportChatWidget() {
   const [open, setOpen] = useState(readOpen)
-  const [unread, setUnread] = useState(0)
 
   useEffect(() => {
     try {
@@ -29,13 +28,25 @@ export function SupportChatWidget() {
   }, [open])
 
   // Poll faster while open, slower in the background while closed.
-  const { messages, isLoading, sending, send, canRate, rate } = useSupportChat(
-    open ? 4000 : 15000,
-  )
+  const {
+    messages,
+    isLoading,
+    sending,
+    send,
+    canRate,
+    rate,
+    status,
+    unreadCount,
+    endChat,
+    ending,
+    markRead,
+  } = useSupportChat(open ? 4000 : 15000)
 
-  const seenIdRef = useRef<number | null>(null) // highest msg id the user has seen
-  const notifiedIdRef = useRef(0) // highest admin id we've already chimed for
+  const notifiedIdRef = useRef<number | null>(null) // highest admin id we've chimed for
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  // Keep the latest markRead without making it an effect dependency.
+  const markReadRef = useRef(markRead)
+  markReadRef.current = markRead
 
   const playSound = () => {
     try {
@@ -49,30 +60,24 @@ export function SupportChatWidget() {
     }
   }
 
+  // Opening the panel is what marks messages read (persisted server-side), not
+  // background polling — so the unread badge survives reloads / other devices.
   useEffect(() => {
-    const ids = messages.map((m) => m.id)
-    const maxId = ids.length ? Math.max(...ids) : 0
+    if (open && unreadCount > 0) markReadRef.current().catch(() => {})
+  }, [open, unreadCount])
+
+  // Chime once per genuinely new support reply while the panel is closed.
+  useEffect(() => {
     const adminIds = messages.filter((m) => m.sender === 'support').map((m) => m.id)
     const maxAdminId = adminIds.length ? Math.max(...adminIds) : 0
-
-    // First load establishes a baseline so pre-existing history never notifies.
-    if (seenIdRef.current === null) {
-      seenIdRef.current = maxId
+    // First load establishes a baseline so pre-existing history never chimes.
+    if (notifiedIdRef.current === null) {
       notifiedIdRef.current = maxAdminId
       return
     }
-    // Open → everything on screen counts as seen.
-    if (open) {
-      seenIdRef.current = maxId
-      setUnread(0)
-      return
-    }
-    // Closed → count unseen admin messages; chime once per new arrival.
-    const unreadCount = adminIds.filter((id) => id > (seenIdRef.current ?? 0)).length
-    setUnread(unreadCount)
     if (maxAdminId > notifiedIdRef.current) {
       notifiedIdRef.current = maxAdminId
-      if (unreadCount > 0) playSound()
+      if (!open) playSound()
     }
   }, [messages, open])
 
@@ -96,9 +101,9 @@ export function SupportChatWidget() {
         )}
 
         {/* Unread badge (only meaningful while closed) */}
-        {!open && unread > 0 && (
+        {!open && unreadCount > 0 && (
           <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold text-white ring-2 ring-white">
-            {unread > 9 ? '9+' : unread}
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
@@ -122,6 +127,9 @@ export function SupportChatWidget() {
             onSend={send}
             canRate={canRate}
             onRate={rate}
+            status={status}
+            onEnd={endChat}
+            ending={ending}
           />
         </div>
       )}

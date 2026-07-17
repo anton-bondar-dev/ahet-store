@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
 import {
   getGetMyChatQueryKey,
+  useCloseMyChat,
   useGetMyChat,
+  useMarkMyChatRead,
   useRateSupport,
   useSendMyMessage,
 } from '../api/generated/support/support'
@@ -19,15 +21,28 @@ export function useSupportChat(refetchInterval: number | false = false) {
   const chatQuery = useGetMyChat({ query: { refetchInterval } })
   const sendMutation = useSendMyMessage({ mutation: { onSuccess: invalidate } })
   const rateMutation = useRateSupport({ mutation: { onSuccess: invalidate } })
+  const closeMutation = useCloseMyChat({ mutation: { onSuccess: invalidate } })
+  const readMutation = useMarkMyChatRead({ mutation: { onSuccess: invalidate } })
+
+  const data = chatQuery.data?.data
 
   return {
-    messages: chatQuery.data?.data.messages ?? [],
+    messages: data?.messages ?? [],
+    // "none" (no ticket yet) | "open" | "closed".
+    status: data?.status ?? 'none',
+    // Server-tracked unread support replies — survives reloads / other devices.
+    unreadCount: data?.unread_count ?? 0,
     isLoading: chatQuery.isLoading,
     sending: sendMutation.isPending,
     send: (text: string) => sendMutation.mutateAsync({ data: { text } }),
     // The ticket is closed and awaiting the user's end-of-chat 👍/👎.
-    canRate: chatQuery.data?.data.can_rate ?? false,
+    canRate: data?.can_rate ?? false,
     rate: (isPositive: boolean) =>
       rateMutation.mutateAsync({ data: { is_positive: isPositive } }),
+    // The customer ends their own conversation (then can rate it).
+    endChat: () => closeMutation.mutateAsync(),
+    ending: closeMutation.isPending,
+    // Clears the unread badge — call only when the user actually views the chat.
+    markRead: () => readMutation.mutateAsync(),
   }
 }
