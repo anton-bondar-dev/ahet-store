@@ -48,6 +48,27 @@ export function SupportChatWidget() {
   const markReadRef = useRef(markRead)
   markReadRef.current = markRead
 
+  const launcherRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Close the chat when clicking anywhere outside the panel (the launcher
+  // toggles on its own, so it's excluded).
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (
+        panelRef.current?.contains(target) ||
+        launcherRef.current?.contains(target)
+      ) {
+        return
+      }
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
+  }, [open])
+
   const playSound = () => {
     try {
       if (!audioRef.current) audioRef.current = new Audio('/sounds/notification.wav')
@@ -85,10 +106,11 @@ export function SupportChatWidget() {
     <>
       {/* Launcher */}
       <button
+        ref={launcherRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Чат підтримки"
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gray-900 text-white shadow-lg transition hover:bg-gray-700"
+        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-lg transition hover:bg-brand-dark"
       >
         {open ? (
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -102,7 +124,7 @@ export function SupportChatWidget() {
 
         {/* Unread badge (only meaningful while closed) */}
         {!open && unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold text-white ring-2 ring-white">
+          <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-white px-1.5 text-xs font-bold text-brand shadow-md ring-2 ring-brand">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -110,8 +132,11 @@ export function SupportChatWidget() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-24 right-5 z-40 flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
-          <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-900 px-4 py-3 text-white">
+        <div
+          ref={panelRef}
+          className="fixed bottom-24 right-5 z-40 flex h-[28rem] w-[22rem] max-w-[calc(100vw-2.5rem)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
+        >
+          <div className="flex items-center gap-2 border-b border-brand-dark/30 bg-brand px-4 py-3 text-white">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-sm font-bold">
               А
             </span>
