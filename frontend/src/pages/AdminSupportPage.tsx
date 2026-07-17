@@ -401,7 +401,7 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
       </aside>
 
       {/* Conversation */}
-      <section className="flex h-[34rem] flex-col rounded-lg border border-gray-200">
+      <section className="flex h-[34rem] min-w-0 flex-col rounded-lg border border-gray-200">
         {selectedId == null ? (
           <div className="flex flex-1 items-center justify-center text-sm text-gray-400">
             Оберіть звернення зі списку
@@ -524,7 +524,7 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
             />
 
             {/* Unified quick-replies + macros: one horizontally-scrollable row */}
-            <div className="flex gap-1.5 overflow-x-auto whitespace-nowrap px-2 py-1 scrollbar-hide">
+            <div className="flex min-w-0 gap-1.5 overflow-x-auto whitespace-nowrap px-2 py-1 scrollbar-hide">
               {QUICK_REPLIES.map((q) => (
                 <button
                   key={q}
