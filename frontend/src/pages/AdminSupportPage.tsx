@@ -516,24 +516,35 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
               {messages.length === 0 && <p className="mt-6 text-center text-sm text-gray-400">Повідомлень немає</p>}
             </div>
 
-            {/* Actionable chat + macros */}
+            {/* Actionable chat (bonuses / coupons) */}
             <ActionBar
               onGrant={(amount) => actionMutation.mutate({ ticketId: selectedId, data: { type: 'grant_bonuses', amount } })}
               onCoupon={(percent) => actionMutation.mutate({ ticketId: selectedId, data: { type: 'generate_coupon', percent } })}
-              macros={macros}
-              onInsertMacro={insertMacro}
               note={actionMsg}
             />
 
-            <div className="flex flex-wrap gap-1.5 px-2">
+            {/* Unified quick-replies + macros: one horizontally-scrollable row */}
+            <div className="flex gap-1.5 overflow-x-auto whitespace-nowrap px-2 py-1 scrollbar-hide">
               {QUICK_REPLIES.map((q) => (
                 <button
                   key={q}
                   type="button"
                   onClick={() => setText(q)}
-                  className="rounded-full border border-gray-200 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-100"
+                  title={q}
+                  className="shrink-0 rounded-full border border-gray-200 px-2.5 py-1 text-xs text-gray-600 transition hover:bg-gray-100"
                 >
-                  {q.length > 24 ? `${q.slice(0, 24)}…` : q}
+                  {q.length > 30 ? `${q.slice(0, 30)}…` : q}
+                </button>
+              ))}
+              {macros.map((m) => (
+                <button
+                  key={`macro-${m.id}`}
+                  type="button"
+                  onClick={() => insertMacro(m.id)}
+                  title={`Макрос: ${m.title}`}
+                  className="shrink-0 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100"
+                >
+                  ⚡ {m.title}
                 </button>
               ))}
             </div>
@@ -605,14 +616,10 @@ const MAX_PERCENT = 100
 function ActionBar({
   onGrant,
   onCoupon,
-  macros,
-  onInsertMacro,
   note,
 }: {
   onGrant: (amount: number) => void
   onCoupon: (percent: number) => void
-  macros: { id: number; title: string }[]
-  onInsertMacro: (id: number) => void
   note: string | null
 }) {
   const [open, setOpen] = useState<'bonus' | 'coupon' | null>(null)
@@ -654,22 +661,6 @@ function ActionBar({
             OK
           </button>
         </div>
-      )}
-      {macros.length > 0 && (
-        <select
-          value=""
-          onChange={(e) => {
-            const id = Number(e.target.value)
-            if (id) onInsertMacro(id)
-            e.target.value = ''
-          }}
-          className="ml-auto rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 focus:outline-none"
-        >
-          <option value="">Вставити макрос…</option>
-          {macros.map((m) => (
-            <option key={m.id} value={m.id}>{m.title}</option>
-          ))}
-        </select>
       )}
     </div>
   )
