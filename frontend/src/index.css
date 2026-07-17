@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Manual dark mode: activated by data-theme="dark" on <html> (not the OS
+   preference), so the header toggle controls it. */
+@custom-variant dark ([data-theme="dark"] &);
+
 /* ── Ahet brand theme ─────────────────────────────────────────────────────
    A sleek tech-red used as a striking accent against clean white / light-gray
    surfaces. Exposes `brand`, `brand-dark` (hover), and `brand-light` (tint)
@@ -21,6 +25,63 @@
     background-color: var(--color-brand);
     color: #fff;
   }
+  body {
+    background-color: var(--color-page);
+    color: var(--color-gray-900);
+  }
+}
+
+:root {
+  --color-page: #ffffff;
+}
+
+/* ── Dark theme ───────────────────────────────────────────────────────────
+   Tailwind v4 utilities resolve to var(--color-*), so remapping the neutral
+   ramp here flips the whole storefront in one place. Brand + status accents
+   (red/green/amber) are left untouched so they keep popping on dark.
+   `white` and `gray-900` are dual-use (surface bg *and* button/text) — we keep
+   their tokens and re-pin only the background usages below, so text-white on
+   red CTAs and text-gray-900 headings still invert correctly. */
+[data-theme="dark"] {
+  --color-page: #0b0d0f;
+  --color-gray-50: #101316;
+  --color-gray-100: #191d21;
+  --color-gray-200: #272c31;
+  --color-gray-300: #363c42;
+  --color-gray-400: #737b83;
+  --color-gray-500: #949ca4;
+  --color-gray-600: #b0b8bf;
+  --color-gray-700: #ccd2d8;
+  --color-gray-800: #e5e8eb;
+  --color-gray-900: #f4f6f8;
+  --color-brand-light: #2a1417;
+}
+
+/* Surfaces that use white → dark card colour (token stays #fff so text-white
+   on buttons remains white). */
+[data-theme="dark"] .bg-white {
+  background-color: #17191c;
+}
+[data-theme="dark"] .bg-white\/95 {
+  background-color: rgb(23 25 28 / 0.95);
+}
+[data-theme="dark"] .focus\:bg-white:focus {
+  background-color: #17191c;
+}
+
+/* Intentionally-dark surfaces (toasts, tooltips, dark buttons) that the ramp
+   would otherwise lighten — re-pin them dark. */
+[data-theme="dark"] .bg-gray-900 {
+  background-color: #0c0e10;
+}
+[data-theme="dark"] .bg-gray-800 {
+  background-color: #14171a;
+}
+[data-theme="dark"] .bg-gray-700 {
+  background-color: #1b1f22;
+}
+[data-theme="dark"] .hover\:bg-gray-700:hover {
+  background-color: #262b30;
 }
 
 @utility scrollbar-hide {
