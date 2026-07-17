@@ -27,8 +27,12 @@ class StampedJWTAuth(JWTAuth):
                 stamp = AccessToken(token).get("stamp")
             except Exception:
                 return None
-            if stamp != str(profile.security_stamp):
-                return None  # token predates a "log out everywhere" → rejected
+            # Tokens issued before the security-stamp feature carry no stamp —
+            # allow them (backward compat; they get re-stamped on next refresh).
+            # A token that DOES carry a stamp must match, so "log out everywhere"
+            # still invalidates it.
+            if stamp is not None and stamp != str(profile.security_stamp):
+                return None
             _touch_presence(request, profile)
         return user
 

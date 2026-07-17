@@ -250,9 +250,13 @@ def refresh_token(request, payload: RefreshIn):
         refresh = RefreshToken(payload.refresh)
     except Exception:
         raise HttpError(401, "Недійсний токен оновлення")
-    # Reject refresh tokens issued before a "log out everywhere".
     profile = Profile.objects.filter(user_id=refresh.get("user_id")).first()
-    if profile is None or refresh.get("stamp") != str(profile.security_stamp):
+    if profile is None:
+        raise HttpError(401, "Сесію завершено")
+    # A stamped refresh token must match the current stamp (else it was logged
+    # out everywhere). Pre-feature tokens have no stamp — accept and re-stamp.
+    stamp = refresh.get("stamp")
+    if stamp is not None and stamp != str(profile.security_stamp):
         raise HttpError(401, "Сесію завершено")
     access = refresh.access_token
     access["stamp"] = str(profile.security_stamp)
