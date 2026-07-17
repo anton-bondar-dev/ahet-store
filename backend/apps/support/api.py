@@ -286,7 +286,7 @@ def list_tickets(request, archived: bool = False):
 def get_ticket(request, ticket_id: int):
     staff = _require_staff(request)
     ticket = get_object_or_404(
-        SupportTicket.objects.select_related("user"), id=ticket_id
+        SupportTicket.objects.select_related("user", "user__profile"), id=ticket_id
     )
     # Viewing marks the user's messages as read by staff.
     ticket.messages.filter(from_staff=False, read_by_staff=False).update(read_by_staff=True)
@@ -691,6 +691,10 @@ def impersonate_user(request, user_id: int):
     token.set_exp(lifetime=timedelta(minutes=30))
     token["imp_by"] = staff.id
     token["imp_sid"] = session.id
+    # Carry the target's security stamp so the impersonation token is subject to
+    # "log out everywhere" / password-change invalidation like any other token.
+    profile, _ = Profile.objects.get_or_create(user=target)
+    token["stamp"] = str(profile.security_stamp)
     log_admin_action(
         staff, AdminAuditLog.ACTION_IMPERSONATE_START, target_user=target,
         session_id=session.id,

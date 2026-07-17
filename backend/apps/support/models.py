@@ -72,6 +72,10 @@ class SupportTicket(models.Model):
         verbose_name = "Support ticket"
         verbose_name_plural = "Support tickets"
         ordering = ["-updated_at"]
+        indexes = [
+            # Admin queue filters by status and sorts by most-recent activity.
+            models.Index(fields=["status", "-updated_at"]),
+        ]
 
     def __str__(self):
         return f"Ticket #{self.pk} ({self.user.username}, {self.status})"

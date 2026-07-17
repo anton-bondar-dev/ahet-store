@@ -58,6 +58,11 @@ class Order(models.Model):
         verbose_name = "Order"
         verbose_name_plural = "Orders"
         ordering = ["-created_at"]
+        indexes = [
+            # Order-history list views filter by buyer then sort newest-first.
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["session_id", "-created_at"]),
+        ]
 
     def __str__(self):
         return f"Order #{self.pk} ({self.status})"

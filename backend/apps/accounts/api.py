@@ -354,6 +354,9 @@ def confirm_password_reset(request, payload: PasswordResetConfirmIn):
         raise HttpError(400, "Недійсне посилання для відновлення пароля")
     if not default_token_generator.check_token(user, payload.token):
         raise HttpError(400, "Посилання недійсне або протерміноване")
+    # Anonymous → authed transition: fold any guest cart in, like the normal
+    # login paths (_authed) do.
+    merge_anonymous_cart(user, get_session_id(request))
     return _set_new_password(user, payload.new_password)
 
 

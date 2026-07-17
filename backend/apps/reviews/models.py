@@ -38,6 +38,10 @@ class Review(models.Model):
         verbose_name_plural = "Reviews"
         unique_together = ("user", "product")  # one review per user per product
         ordering = ["-created_at"]
+        indexes = [
+            # Support-moderation queue filters on the flag + its status.
+            models.Index(fields=["needs_support", "support_status"]),
+        ]
 
     def __str__(self):
         return f"{self.rating}★ by {self.user_id} on {self.product_id}"

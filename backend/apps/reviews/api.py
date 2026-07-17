@@ -30,6 +30,8 @@ def _reviews_qs(product_id: int):
     operation_id="create_reply",
 )
 def create_reply(request, review_id: int, payload: ReplyIn):
+    # Staff may reply (support), but blocked customers may not post anything.
+    forbid_blocked(request.auth)
     review = get_object_or_404(Review, id=review_id)
     reply = ReviewReply.objects.create(review=review, user=request.auth, text=payload.text)
     return reply
