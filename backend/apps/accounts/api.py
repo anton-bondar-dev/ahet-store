@@ -321,12 +321,13 @@ def change_password(request, payload: ChangePasswordIn):
     "/password/reset/request", response=OkOut, operation_id="request_password_reset"
 )
 def request_password_reset(request, payload: PasswordResetRequestIn):
-    # "Forgot password": email a one-time reset link. Only real password-based
-    # accounts get one (Google accounts have an unusable password). Always
-    # returns ok so we never reveal which emails are registered.
+    # "Forgot password": email a one-time reset link to any registered account,
+    # including Google-login accounts (completing the reset lets them SET a
+    # password and use email login too). Always returns ok so we never reveal
+    # which emails are registered.
     email = payload.email.strip().lower()
     user = User.objects.filter(email__iexact=email).first()
-    if user and user.has_usable_password():
+    if user:
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         reset_url = (
