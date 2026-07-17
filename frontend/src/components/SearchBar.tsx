@@ -79,8 +79,14 @@ export function SearchBar() {
           }}
           placeholder="Пошук товарів…"
           aria-label="Пошук товарів"
-          className="w-full rounded-md border border-gray-300 bg-gray-50 py-2 pl-9 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:bg-white focus:outline-none"
+          className="w-full rounded-md border border-gray-300 bg-gray-50 py-2 pl-9 pr-24 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-500 focus:bg-white focus:outline-none"
         />
+        <button
+          type="submit"
+          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-gray-700"
+        >
+          Знайти
+        </button>
       </form>
 
       {showDropdown && (
