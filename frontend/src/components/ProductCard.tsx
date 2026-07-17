@@ -6,7 +6,15 @@ import { useCart } from '../hooks/useCart'
 import { useIsStaff } from '../hooks/useIsStaff'
 import { formatPrice, reviewsPlural } from '../lib/format'
 
-export function ProductCard({ product }: { product: ProductOut }) {
+export function ProductCard({
+  product,
+  noZoom = false,
+}: {
+  product: ProductOut
+  // In horizontal carousels (overflow-clipped), the scale/big-shadow hover gets
+  // cut off — use a subtle, non-overflowing hover instead.
+  noZoom?: boolean
+}) {
   const isStaff = useIsStaff()
   const imageUrl = productImageUrl(product.image)
   const isUnavailable = !product.is_active || product.stock === 0
@@ -14,10 +22,13 @@ export function ProductCard({ product }: { product: ProductOut }) {
   const saving = onSale
     ? Number(product.price) - Number(product.discount_price)
     : 0
+  const hoverEffect = noZoom
+    ? 'hover:border-gray-300 hover:shadow-md'
+    : 'hover:z-50 hover:scale-105 hover:shadow-xl'
 
   return (
     <div
-      className={`group relative z-10 flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:z-50 hover:scale-105 hover:shadow-xl ${
+      className={`group relative z-10 flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 ${hoverEffect} ${
         isUnavailable ? 'opacity-60' : ''
       }`}
     >
