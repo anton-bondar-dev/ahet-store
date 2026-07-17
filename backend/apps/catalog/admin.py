@@ -38,4 +38,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ("disable_new_badge", "custom_bonus")
     search_fields = ("title", "sku")
     prepopulated_fields = {"slug": ("title",)}
+    # Images are managed solely through the gallery inline below. The legacy
+    # single `image` field is hidden so it doesn't duplicate that control.
+    exclude = ("image",)
     inlines = [ProductImageInline]

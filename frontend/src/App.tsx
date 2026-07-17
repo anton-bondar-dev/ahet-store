@@ -4,7 +4,10 @@ import {
   useListCategories,
   useListProducts,
 } from './api/generated/catalog/catalog'
-import type { ProductOut } from './api/generated/onlineStoreAPI.schemas'
+import type {
+  CategoryOut,
+  ProductOut,
+} from './api/generated/onlineStoreAPI.schemas'
 import { Breadcrumbs, type Crumb } from './components/Breadcrumbs'
 import { CategoryTree } from './components/CategoryTree'
 import { ProductCard } from './components/ProductCard'
@@ -265,19 +268,25 @@ function AllProductsView({
   byPopularity,
 }: {
   products: ProductOut[]
-  categories: { id: number; name: string }[]
+  categories: CategoryOut[]
   sortBy: SortKey
   byPopularity: (a: ProductOut, b: ProductOut) => number
 }) {
-  const sections = categories
-    .map((category) => {
-      const inCategory = products.filter((p) => p.category.id === category.id)
+  // One slider per TOP-LEVEL (root) category, containing every product beneath
+  // it — instead of a slider per leaf/brand category. A product's root is the
+  // first entry of its category's ancestor path (or the category itself when it
+  // is already a root).
+  const roots = categories.filter((c) => c.parent_id == null)
+  const rootIdOf = (p: ProductOut) => p.category.ancestors?.[0]?.id ?? p.category.id
+  const sections = roots
+    .map((root) => {
+      const inRoot = products.filter((p) => rootIdOf(p) === root.id)
       return {
-        category,
+        category: root,
         items:
           sortBy === 'popular'
-            ? [...inCategory].sort(byPopularity)
-            : sortProducts(inCategory, sortBy),
+            ? [...inRoot].sort(byPopularity)
+            : sortProducts(inRoot, sortBy),
       }
     })
     .filter((section) => section.items.length > 0)
