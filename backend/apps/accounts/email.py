@@ -78,7 +78,12 @@ def send_password_reset(email: str, name: str, reset_url: str) -> None:
         f"Якщо ви не робили цей запит — просто проігноруйте цей лист, "
         f"ваш пароль залишиться незмінним."
     )
-    logger.info("PASSWORD RESET LINK for %s: %s", email, reset_url)
+    # The link carries a valid token — only echo it to the log in DEBUG (dev
+    # convenience); never leak it to production logs.
+    if settings.DEBUG:
+        logger.info("PASSWORD RESET LINK (dev) for %s: %s", email, reset_url)
+    else:
+        logger.info("Sending password reset link to %s", email)
     _deliver(subject, body, email)
 
 
@@ -98,8 +103,9 @@ def send_email_otp(user, code: str) -> None:
         f"Ваш код підтвердження для входу в Ahet Store: {code}\n\n"
         f"Код дійсний 2 хвилини. Якщо ви не намагалися увійти, проігноруйте цей лист."
     )
-    # Always print the raw code so it can be grabbed from the terminal in dev,
-    # even when email delivery is slow/filtered.
-    logger.info("DEVELOPMENT ONLY - OTP CODE: %s", code)
+    # Echo the raw code to the log only in DEBUG so it can be grabbed from the
+    # terminal in dev; never leak login codes to production logs.
+    if settings.DEBUG:
+        logger.info("DEVELOPMENT ONLY - OTP CODE: %s", code)
     logger.info("2FA OTP: sending login code to %s", user.email)
     _deliver(subject, body, user.email)
