@@ -6,7 +6,9 @@ venv/
 *.sqlite3
 # Uploaded media (user files)
 media/
+# Environment / secrets — never commit real values
 .env
+*.env
 .env.*
 !.env.example
 
