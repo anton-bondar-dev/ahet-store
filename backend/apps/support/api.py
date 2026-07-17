@@ -161,14 +161,20 @@ def mark_my_chat_read(request):
 
 @router.post("/close", response=UserChatOut, auth=JWTAuth(), operation_id="close_my_chat")
 def close_my_chat(request):
-    # The customer ends their own conversation. Credit the handling operator (if
-    # one was assigned) so the end-of-chat rating still attributes correctly.
+    # The customer ends their own conversation. Credit the last staff member who
+    # replied ("the last person to respond") so the end-of-chat rating attributes
+    # to whoever actually handled it, not just whoever was nominally assigned.
     forbid_staff(request.auth)
     ticket = _user_open_ticket(request.auth)
     if ticket is None:
         raise HttpError(400, "Немає активного звернення")
+    last_staff_msg = (
+        ticket.messages.filter(from_staff=True, sender__isnull=False)
+        .order_by("-created_at")
+        .first()
+    )
     ticket.status = SupportTicket.STATUS_CLOSED
-    ticket.closed_by = ticket.assigned_to
+    ticket.closed_by = last_staff_msg.sender if last_staff_msg else None
     ticket.closed_at = timezone.now()
     ticket.save(update_fields=["status", "closed_by", "closed_at", "updated_at"])
     # Neutral system notice so both the customer thread and the operator's

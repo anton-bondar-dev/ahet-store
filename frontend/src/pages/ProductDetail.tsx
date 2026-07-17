@@ -183,9 +183,10 @@ function AddToCartButton({
 }
 
 // Terminal breadcrumb: shows the product title as a button that copies the
-// current page URL, with a dismissible, hover-persistent floating tooltip.
+// current page URL. Copying is a deliberate two-step: the first click only
+// warns that the next click will copy; the second click performs the copy.
 function CopyLinkCrumb({ title }: { title: string }) {
-  const [copied, setCopied] = useState(false)
+  const [mode, setMode] = useState<'idle' | 'warn' | 'copied'>('idle')
   const [hovered, setHovered] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -198,35 +199,46 @@ function CopyLinkCrumb({ title }: { title: string }) {
 
   const scheduleHide = () => {
     clearTimer()
-    timerRef.current = setTimeout(() => setCopied(false), 3000)
+    timerRef.current = setTimeout(() => setMode('idle'), 3000)
   }
 
   useEffect(() => clearTimer, [])
 
-  const handleCopy = () => {
-    navigator.clipboard
-      .writeText(window.location.href)
-      .then(() => {
-        setCopied(true)
-        scheduleHide()
-      })
-      .catch(() => {
-        /* clipboard unavailable (e.g. insecure context) — no-op */
-      })
+  const handleClick = () => {
+    if (mode === 'warn') {
+      // Second click confirms the warning → actually copy now.
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => {
+          setMode('copied')
+          scheduleHide()
+        })
+        .catch(() => {
+          // Clipboard unavailable (e.g. insecure context) — drop the prompt.
+          setMode('idle')
+        })
+    } else {
+      // First click only arms + warns; nothing is copied yet.
+      setMode('warn')
+      scheduleHide()
+    }
   }
+
+  const isWarn = mode === 'warn'
+  const bg = isWarn ? 'bg-amber-600' : 'bg-gray-900'
 
   return (
     <span className="relative">
       <button
         type="button"
-        onClick={handleCopy}
+        onClick={handleClick}
         title={title}
         className="max-w-xs truncate text-gray-700 transition hover:text-gray-900"
       >
         {title}
       </button>
 
-      {copied && (
+      {mode !== 'idle' && (
         <div
           role="status"
           onMouseEnter={() => {
@@ -237,23 +249,25 @@ function CopyLinkCrumb({ title }: { title: string }) {
             setHovered(false)
             scheduleHide()
           }}
-          className={`absolute left-0 top-full z-20 mt-3 flex w-64 items-start gap-2 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg ${
+          className={`absolute left-0 top-full z-20 mt-3 flex w-64 items-start gap-2 rounded-lg px-3 py-2 text-xs text-white shadow-lg ${bg} ${
             hovered ? '' : 'animate-float'
           }`}
         >
           {/* pointer/arrow */}
-          <span className="absolute -top-1 left-6 h-2 w-2 rotate-45 bg-gray-900" />
+          <span className={`absolute -top-1 left-6 h-2 w-2 rotate-45 ${bg}`} />
           <span className="flex-1 leading-relaxed">
-            Посилання на товар скопійовано в буфер обміну!
+            {isWarn
+              ? 'Наступний клік скопіює посилання на товар у буфер обміну.'
+              : 'Посилання на товар скопійовано в буфер обміну!'}
           </span>
           <button
             type="button"
             onClick={() => {
               clearTimer()
-              setCopied(false)
+              setMode('idle')
             }}
             aria-label="Закрити"
-            className="shrink-0 text-gray-400 transition hover:text-white"
+            className="shrink-0 text-white/70 transition hover:text-white"
           >
             ✕
           </button>
