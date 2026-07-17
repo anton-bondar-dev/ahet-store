@@ -39,13 +39,74 @@ class Category(models.Model):
     slug = models.SlugField(max_length=255, unique=True)
     description = models.TextField(blank=True)
 
+    # Self-referential tree: a null parent means a root category. `related_name`
+    # gives every node a `.children` reverse accessor.
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children",
+    )
+
+    # Denormalized materialized path of ancestor PKs ending with self, e.g.
+    # "1/", "1/5/", "1/5/12/". This lets us resolve an entire subtree with a
+    # single indexed prefix query (path LIKE '1/5/%') — no recursion, no N+1 —
+    # and read the ancestor chain (breadcrumbs) straight off the string.
+    path = models.CharField(max_length=255, blank=True, default="", db_index=True)
+    # Nesting level (root = 0); handy for ordering and sidebar indentation.
+    depth = models.PositiveIntegerField(default=0)
+
     class Meta:
         verbose_name = "Category"
         verbose_name_plural = "Categories"
-        ordering = ["name"]
+        # Depth-first-friendly default: siblings alphabetical, path keeps a node
+        # next to its descendants.
+        ordering = ["path", "name"]
 
     def __str__(self):
         return self.name
+
+    # --- Tree maintenance ---------------------------------------------------
+
+    def _compute_path_depth(self):
+        if self.parent_id:
+            return f"{self.parent.path}{self.pk}/", self.parent.depth + 1
+        return f"{self.pk}/", 0
+
+    def save(self, *args, **kwargs):
+        # Save first so a new node has a PK, then sync its path/depth. If the
+        # path changed (create or re-parent), cascade the fix to descendants.
+        super().save(*args, **kwargs)
+        new_path, new_depth = self._compute_path_depth()
+        if new_path != self.path or new_depth != self.depth:
+            self.path, self.depth = new_path, new_depth
+            Category.objects.filter(pk=self.pk).update(path=new_path, depth=new_depth)
+            for child in self.children.all():
+                child.save()
+
+    @property
+    def ancestor_ids(self) -> list[int]:
+        """PKs from root down to (but excluding) self, in order."""
+        return [int(x) for x in self.path.split("/") if x and int(x) != self.pk]
+
+    @classmethod
+    def rebuild_paths(cls):
+        """Recompute every node's path/depth from the `parent` links (BFS from
+        roots). Idempotent; used after bulk tree edits / seeding."""
+        children_of: dict[int | None, list] = {}
+        for node in cls.objects.all():
+            children_of.setdefault(node.parent_id, []).append(node)
+
+        def walk(node, parent_path, depth):
+            node.path = f"{parent_path}{node.pk}/"
+            node.depth = depth
+            cls.objects.filter(pk=node.pk).update(path=node.path, depth=node.depth)
+            for child in children_of.get(node.pk, []):
+                walk(child, node.path, depth + 1)
+
+        for root in children_of.get(None, []):
+            walk(root, "", 0)
 
 
 class Product(models.Model):

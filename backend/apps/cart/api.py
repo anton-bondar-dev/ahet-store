@@ -7,6 +7,7 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from apps.catalog.models import Product
+from apps.catalog.tree import attach_ancestors
 from apps.core.permissions import forbid_blocked, forbid_staff
 from apps.coupons.models import Coupon
 
@@ -45,6 +46,9 @@ def serialize_cart(cart: Optional[Cart]) -> dict:
         if item.quantity > 0:
             total_quantity += item.quantity
             total_price += item.product.effective_price * item.quantity
+
+    # Breadcrumb ancestors for each line's product category, in one bulk query.
+    attach_ancestors([it["product"].category for it in items])
 
     # Coupon: apply only if still valid for the current subtotal.
     coupon_code = None

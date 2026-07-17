@@ -6,6 +6,7 @@ from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
 
 from .models import Product, RecentlyViewed
 from .schemas import ProductOut
+from .tree import attach_ancestors
 
 router = Router(tags=["products"])
 
@@ -23,7 +24,9 @@ def get_viewed(request):
         .select_related("product__category")
         .order_by("-viewed_at")[:MAX_VIEWED]
     )
-    return [row.product for row in rows]
+    products = [row.product for row in rows]
+    attach_ancestors([p.category for p in products])
+    return products
 
 
 @router.post("/viewed", response={200: None}, auth=JWTAuth(), operation_id="track_viewed")

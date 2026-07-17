@@ -8,6 +8,7 @@ from ninja import Router
 
 from .models import Category, Product
 from .schemas import CategoryOut, ProductOut, SuggestionOut
+from .tree import attach_ancestors, descendant_id_subquery
 
 router = Router(tags=["catalog"])
 
@@ -22,29 +23,51 @@ MAX_SUGGESTIONS = 10
 
 @router.get("/categories", response=List[CategoryOut], operation_id="list_categories")
 def list_categories(request):
-    return Category.objects.all()
+    # Ordered by `path` → parents precede their descendants (DFS order), which
+    # the frontend consumes directly to build the sidebar tree.
+    categories = list(Category.objects.all())
+    attach_ancestors(categories)
+    return categories
 
 
 @router.get("/products", response=List[ProductOut], operation_id="list_products")
-def list_products(request, q: Optional[str] = None, sort: Optional[str] = None):
+def list_products(
+    request,
+    q: Optional[str] = None,
+    sort: Optional[str] = None,
+    category: Optional[int] = None,
+):
     products = Product.objects.select_related("category")
+
+    # Cascading category filter: selecting a parent returns products from the
+    # whole subtree. One indexed prefix subquery, inlined into the product query.
+    if category is not None:
+        node = Category.objects.filter(id=category).first()
+        if node is None:
+            return []
+        products = products.filter(category_id__in=descendant_id_subquery(node))
+
     if not q or not q.strip():
         if sort == "popular":
             # Trending engine: time-decayed popularity score.
-            return products.with_trending_score().order_by("-trending_score", "title")
-        return products.all()
-
-    ql = q.strip().lower()
-    return (
-        products.annotate(
-            title_sim=TrigramWordSimilarity(ql, Lower("title")),
-            category_sim=TrigramWordSimilarity(ql, Lower("category__name")),
+            products = products.with_trending_score().order_by("-trending_score", "title")
+        result = list(products)
+    else:
+        ql = q.strip().lower()
+        result = list(
+            products.annotate(
+                title_sim=TrigramWordSimilarity(ql, Lower("title")),
+                category_sim=TrigramWordSimilarity(ql, Lower("category__name")),
+            )
+            # Title outranks category via CATEGORY_WEIGHT; Greatest keeps the best.
+            .annotate(rank=Greatest("title_sim", F("category_sim") * Value(CATEGORY_WEIGHT)))
+            .filter(rank__gte=SIMILARITY_THRESHOLD)
+            .order_by("-rank", "title")
         )
-        # Title outranks category via CATEGORY_WEIGHT; Greatest keeps the best of the two.
-        .annotate(rank=Greatest("title_sim", F("category_sim") * Value(CATEGORY_WEIGHT)))
-        .filter(rank__gte=SIMILARITY_THRESHOLD)
-        .order_by("-rank", "title")
-    )
+
+    # Breadcrumb data for every product's category, in one extra query.
+    attach_ancestors([p.category for p in result])
+    return result
 
 
 @router.get("/suggestions", response=List[SuggestionOut], operation_id="get_suggestions")
@@ -98,4 +121,6 @@ def get_product(request, slug: str):
     product = get_object_or_404(Product.objects.select_related("category"), slug=slug)
     # Count the view for the trending engine (atomic, doesn't touch `product`).
     Product.objects.filter(id=product.id).update(views_count=F("views_count") + 1)
+    # Full ancestor path for the product-page breadcrumbs.
+    attach_ancestors([product.category])
     return product

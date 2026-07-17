@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   useListCategories,
   useListProducts,
 } from './api/generated/catalog/catalog'
 import type { ProductOut } from './api/generated/onlineStoreAPI.schemas'
+import { Breadcrumbs, type Crumb } from './components/Breadcrumbs'
+import { CategoryTree } from './components/CategoryTree'
 import { ProductCard } from './components/ProductCard'
+import { buildCategoryTree, subtreeCounts } from './lib/categoryTree'
 
 type SortKey = 'newest' | 'popular' | 'price-asc' | 'price-desc' | 'discount'
 
@@ -57,14 +60,8 @@ function App() {
     { q: query },
     { query: { enabled: query.length > 0 } },
   )
-  const [sortBy, setSortBy] = useState<SortKey>('newest')
-  // Popularity is a store-wide ranking computed server-side (Trending Engine),
-  // so it can't be sorted client-side — fetch the ordered list on demand.
-  const popularQuery = useListProducts(
-    { sort: 'popular' },
-    { query: { enabled: sortBy === 'popular' && query.length === 0 } },
-  )
 
+  const [sortBy, setSortBy] = useState<SortKey>('newest')
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     () => {
       const raw = searchParams.get('categoryId')
@@ -72,20 +69,45 @@ function App() {
       return Number.isInteger(id) ? id : null
     },
   )
+  const [expanded, setExpanded] = useState<Set<number>>(new Set())
 
-  const selectCategory = (id: number | null) => {
-    setSelectedCategoryId(id)
-    // Leaving search mode when the user starts browsing categories.
-    if (query) {
-      setSearchParams(
-        (prev) => {
-          prev.delete('q')
-          return prev
-        },
-        { replace: true },
-      )
-    }
-  }
+  // Store-wide popularity ranking (Trending Engine) for the "all products" view.
+  const popularQuery = useListProducts(
+    { sort: 'popular' },
+    {
+      query: {
+        enabled:
+          sortBy === 'popular' &&
+          query.length === 0 &&
+          selectedCategoryId === null,
+      },
+    },
+  )
+
+  // Products for the selected category — the API cascades to the whole subtree.
+  // Popularity is server-ordered; other sorts are applied client-side below.
+  const categoryQuery = useListProducts(
+    {
+      category: selectedCategoryId ?? undefined,
+      sort: sortBy === 'popular' ? 'popular' : undefined,
+    },
+    { query: { enabled: selectedCategoryId != null && query.length === 0 } },
+  )
+
+  // Auto-expand the path to the selected category (e.g. arriving via a deep
+  // link or a product-page breadcrumb) so its place in the tree is visible.
+  useEffect(() => {
+    if (selectedCategoryId == null) return
+    const cats = categoriesQuery.data?.data ?? []
+    const selected = cats.find((c) => c.id === selectedCategoryId)
+    if (!selected) return
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      next.add(selected.id)
+      for (const ancestor of selected.ancestors ?? []) next.add(ancestor.id)
+      return next
+    })
+  }, [selectedCategoryId, categoriesQuery.data])
 
   if (productsQuery.isLoading || categoriesQuery.isLoading) {
     return <p className="p-6 text-gray-500">Завантаження товарів…</p>
@@ -101,43 +123,85 @@ function App() {
 
   const products = productsQuery.data?.data ?? []
   const categories = categoriesQuery.data?.data ?? []
+  const tree = buildCategoryTree(categories)
+  const counts = subtreeCounts(products)
+  const selectedCategory = categories.find((c) => c.id === selectedCategoryId)
 
-  // Popularity ranking (product id → global position) from the server-sorted
-  // list, so we can order products by popularity while keeping the normal
-  // category-grouped layout.
+  // Popularity ranking (product id → global position) for the "all products"
+  // grouped view, so sections stay category-grouped while ordered by popularity.
   const popularRank = new Map(
     (popularQuery.data?.data ?? []).map((p, i) => [p.id, i] as const),
   )
   const byPopularity = (a: ProductOut, b: ProductOut) =>
     (popularRank.get(a.id) ?? Infinity) - (popularRank.get(b.id) ?? Infinity)
 
-  const countByCategory = new Map<number, number>()
-  for (const product of products) {
-    countByCategory.set(
-      product.category.id,
-      (countByCategory.get(product.category.id) ?? 0) + 1,
-    )
+  const selectCategory = (id: number | null) => {
+    setSelectedCategoryId(id)
+    // Leaving search mode when the user starts browsing categories.
+    if (query) {
+      setSearchParams(
+        (prev) => {
+          prev.delete('q')
+          return prev
+        },
+        { replace: true },
+      )
+    }
   }
+
+  const toggleExpand = (id: number) =>
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  // Breadcrumb trail for the selected category: Усі товари / …ancestors / self.
+  const categoryCrumbs: Crumb[] = selectedCategory
+    ? [
+        { label: 'Усі товари', onClick: () => selectCategory(null) },
+        ...(selectedCategory.ancestors ?? []).map((a) => ({
+          label: a.name,
+          onClick: () => selectCategory(a.id),
+        })),
+        { label: selectedCategory.name },
+      ]
+    : []
+
+  const categoryProducts = categoryQuery.data?.data ?? []
+  const sortedCategoryProducts =
+    sortBy === 'popular'
+      ? categoryProducts
+      : sortProducts(categoryProducts, sortBy)
 
   return (
     <div className="mx-auto flex max-w-7xl gap-8 p-6">
-      <aside className="w-56 shrink-0">
+      <aside className="w-64 shrink-0">
         <nav className="flex flex-col gap-1">
-          <CategoryItem
-            name="Усі товари"
-            count={products.length}
-            active={!query && selectedCategoryId === null}
+          <button
+            type="button"
             onClick={() => selectCategory(null)}
+            className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
+              !query && selectedCategoryId === null
+                ? 'bg-gray-100 font-semibold text-gray-900'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <span className="truncate">Усі товари</span>
+            <span className="ml-2 shrink-0 text-xs text-gray-400">
+              {products.length}
+            </span>
+          </button>
+
+          <CategoryTree
+            nodes={tree}
+            selectedId={query ? null : selectedCategoryId}
+            expanded={expanded}
+            counts={counts}
+            onSelect={selectCategory}
+            onToggle={toggleExpand}
           />
-          {categories.map((category) => (
-            <CategoryItem
-              key={category.id}
-              name={category.name}
-              count={countByCategory.get(category.id) ?? 0}
-              active={!query && selectedCategoryId === category.id}
-              onClick={() => selectCategory(category.id)}
-            />
-          ))}
         </nav>
       </aside>
 
@@ -146,8 +210,11 @@ function App() {
           <SearchResults query={query} search={searchQuery} />
         ) : (
           <>
-            <div className="mb-6 flex items-center justify-end">
-              <label className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                {selectedCategory && <Breadcrumbs crumbs={categoryCrumbs} />}
+              </div>
+              <label className="flex shrink-0 items-center gap-2 text-sm text-gray-600">
                 <span>Сортування</span>
                 <select
                   value={sortBy}
@@ -171,48 +238,23 @@ function App() {
                 byPopularity={byPopularity}
               />
             ) : (
-              <CategoryGrid
-                products={(() => {
-                  const inCategory = products.filter(
-                    (p) => p.category.id === selectedCategoryId,
-                  )
-                  return sortBy === 'popular'
-                    ? [...inCategory].sort(byPopularity)
-                    : sortProducts(inCategory, sortBy)
-                })()}
-              />
+              <>
+                {selectedCategory && (
+                  <h1 className="mb-5 text-2xl font-bold text-gray-900">
+                    {selectedCategory.name}
+                  </h1>
+                )}
+                {categoryQuery.isLoading ? (
+                  <p className="text-gray-500">Завантаження…</p>
+                ) : (
+                  <CategoryGrid products={sortedCategoryProducts} />
+                )}
+              </>
             )}
           </>
         )}
       </main>
     </div>
-  )
-}
-
-function CategoryItem({
-  name,
-  count,
-  active,
-  onClick,
-}: {
-  name: string
-  count: number
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
-        active
-          ? 'bg-gray-100 font-semibold text-gray-900'
-          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-      }`}
-    >
-      <span className="truncate">{name}</span>
-      <span className="ml-2 shrink-0 text-xs text-gray-400">{count}</span>
-    </button>
   )
 }
 

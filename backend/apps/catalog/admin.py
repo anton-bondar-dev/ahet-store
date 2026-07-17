@@ -5,9 +5,18 @@ from .models import Category, Product
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug")
-    search_fields = ("name",)
+    list_display = ("name", "slug", "parent", "depth", "path")
+    list_filter = ("depth", "parent")
+    search_fields = ("name", "slug", "path")
+    autocomplete_fields = ("parent",)
+    readonly_fields = ("path", "depth")
     prepopulated_fields = {"slug": ("name",)}
+    actions = ("rebuild_paths_action",)
+
+    @admin.action(description="Rebuild category paths/depths from parent links")
+    def rebuild_paths_action(self, request, queryset):
+        Category.rebuild_paths()
+        self.message_user(request, "Category paths rebuilt.")
 
 
 @admin.register(Product)

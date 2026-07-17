@@ -8,11 +8,23 @@ export interface HealthOut {
   status: string;
 }
 
+/**
+ * A single ancestor node in a breadcrumb trail (no recursion).
+ */
+export interface CategoryBrief {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 export interface CategoryOut {
   id: number;
   name: string;
   slug: string;
   description: string;
+  parent_id: number | null;
+  depth: number;
+  ancestors?: CategoryBrief[];
 }
 
 export interface ProductOut {
@@ -538,6 +550,7 @@ export interface ProductEditIn {
 export type ListProductsParams = {
 q?: string | null;
 sort?: string | null;
+category?: number | null;
 };
 
 export type GetSuggestionsParams = {

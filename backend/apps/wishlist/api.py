@@ -6,6 +6,7 @@ from ninja import Router, Schema
 from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
 from apps.catalog.models import Product
 from apps.catalog.schemas import ProductOut
+from apps.catalog.tree import attach_ancestors
 
 from .models import Favorite
 
@@ -41,7 +42,9 @@ def list_wishlist_ids(request):
 def list_wishlist(request):
     # Return raw Product instances so Ninja serializes them against ProductOut
     # (same approach as the cart / recently-viewed endpoints).
-    return [fav.product for fav in _favorites_qs(request.auth)]
+    products = [fav.product for fav in _favorites_qs(request.auth)]
+    attach_ancestors([p.category for p in products])
+    return products
 
 
 @router.post(

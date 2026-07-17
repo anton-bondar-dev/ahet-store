@@ -1,15 +1,14 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useGetProduct } from '../api/generated/catalog/catalog'
 import { productImageUrl } from '../api/http'
+import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs'
 import { ReviewsSection } from '../components/reviews/ReviewsSection'
 import { WishlistButton } from '../components/WishlistButton'
 import { useCart } from '../hooks/useCart'
 import { useIsStaff } from '../hooks/useIsStaff'
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
 import { formatPrice } from '../lib/format'
-
-type Crumb = { label: string; to?: string; node?: ReactNode }
 
 export function ProductDetail() {
   const { slug } = useParams<{ slug: string }>()
@@ -49,6 +48,11 @@ export function ProductDetail() {
 
   const crumbs: Crumb[] = [
     { label: 'Головна', to: '/' },
+    // Full ancestral path (root → parent), then the leaf category, then self.
+    ...(product.category.ancestors ?? []).map((ancestor) => ({
+      label: ancestor.name,
+      to: `/?categoryId=${ancestor.id}`,
+    })),
     {
       label: product.category.name,
       to: `/?categoryId=${product.category.id}`,
@@ -175,38 +179,6 @@ function AddToCartButton({
     >
       {disabled ? 'Немає в наявності' : added ? 'Додано!' : 'У кошик'}
     </button>
-  )
-}
-
-function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
-  return (
-    <nav aria-label="Навігаційний ланцюжок">
-      <ol className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
-        {crumbs.map((crumb, index) => {
-          const isLast = index === crumbs.length - 1
-          return (
-            <li key={index} className="flex min-w-0 items-center gap-2">
-              {index > 0 && <span className="text-gray-300">/</span>}
-              {crumb.node ? (
-                crumb.node
-              ) : crumb.to ? (
-                <Link to={crumb.to} className="transition hover:text-gray-900">
-                  {crumb.label}
-                </Link>
-              ) : (
-                <span
-                  className={`truncate ${isLast ? 'max-w-xs text-gray-700' : ''}`}
-                  title={crumb.label}
-                  aria-current={isLast ? 'page' : undefined}
-                >
-                  {crumb.label}
-                </span>
-              )}
-            </li>
-          )
-        })}
-      </ol>
-    </nav>
   )
 }
 
