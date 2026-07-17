@@ -22,6 +22,7 @@ def get_viewed(request):
     rows = (
         RecentlyViewed.objects.filter(user=request.auth)
         .select_related("product__category")
+        .prefetch_related("product__gallery")
         .order_by("-viewed_at")[:MAX_VIEWED]
     )
     products = [row.product for row in rows]

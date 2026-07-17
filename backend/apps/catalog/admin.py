@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Product
+from .models import Category, Product, ProductImage
 
 
 @admin.register(Category)
@@ -19,6 +19,15 @@ class CategoryAdmin(admin.ModelAdmin):
         self.message_user(request, "Category paths rebuilt.")
 
 
+class ProductImageInline(admin.TabularInline):
+    # Gallery editor: add multiple images and set their slider order via
+    # `position` (lower = earlier). Ordered by position in the form too.
+    model = ProductImage
+    extra = 1
+    fields = ("image", "position")
+    ordering = ("position", "id")
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
@@ -29,3 +38,4 @@ class ProductAdmin(admin.ModelAdmin):
     list_editable = ("disable_new_badge", "custom_bonus")
     search_fields = ("title", "sku")
     prepopulated_fields = {"slug": ("title",)}
+    inlines = [ProductImageInline]

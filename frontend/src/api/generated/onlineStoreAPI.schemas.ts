@@ -41,6 +41,7 @@ export interface ProductOut {
   discount_price: string | null;
   discount_end_date: string | null;
   image: string | null;
+  images?: string[];
   average_rating: number;
   reviews_count: number;
   is_new: boolean;

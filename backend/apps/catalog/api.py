@@ -37,7 +37,7 @@ def list_products(
     sort: Optional[str] = None,
     category: Optional[int] = None,
 ):
-    products = Product.objects.select_related("category")
+    products = Product.objects.select_related("category").prefetch_related("gallery")
 
     # Cascading category filter: selecting a parent returns products from the
     # whole subtree. One indexed prefix subquery, inlined into the product query.
@@ -118,7 +118,9 @@ def get_suggestions(request, q: str = ""):
 # `/suggestions` resolve first and are not captured by the `{slug}` path parameter.
 @router.get("/{slug}", response=ProductOut, operation_id="get_product")
 def get_product(request, slug: str):
-    product = get_object_or_404(Product.objects.select_related("category"), slug=slug)
+    product = get_object_or_404(
+        Product.objects.select_related("category").prefetch_related("gallery"), slug=slug
+    )
     # Count the view for the trending engine (atomic, doesn't touch `product`).
     Product.objects.filter(id=product.id).update(views_count=F("views_count") + 1)
     # Full ancestor path for the product-page breadcrumbs.

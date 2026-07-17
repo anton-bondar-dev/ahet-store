@@ -182,6 +182,37 @@ class Product(models.Model):
             return self.discount_price
         return self.price
 
+    @property
+    def image_urls(self) -> list[str]:
+        # Ordered gallery URLs (the slider). Falls back to the legacy single
+        # `image` when a product has no gallery rows yet. Uses `self.gallery.all()`
+        # so a prefetch on "gallery" makes this free (no per-product query).
+        urls = [gi.image.url for gi in self.gallery.all() if gi.image]
+        if urls:
+            return urls
+        return [self.image.url] if self.image else []
+
+
+class ProductImage(models.Model):
+    """A single image in a product's gallery. Products show a slider built from
+    these, ordered by `position` (which staff set in the Django admin)."""
+
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="gallery"
+    )
+    image = models.ImageField(upload_to="products/images/")
+    # Lower = earlier in the slider. Editable in the admin inline.
+    position = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Product image"
+        verbose_name_plural = "Product images"
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return f"Image #{self.pk} for product {self.product_id} (pos {self.position})"
+
 
 class RecentlyViewed(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recently_viewed")

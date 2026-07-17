@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useGetProduct } from '../api/generated/catalog/catalog'
-import { productImageUrl } from '../api/http'
 import { Breadcrumbs, type Crumb } from '../components/Breadcrumbs'
+import { ProductGallery } from '../components/ProductGallery'
 import { ReviewsSection } from '../components/reviews/ReviewsSection'
 import { WishlistButton } from '../components/WishlistButton'
 import { useCart } from '../hooks/useCart'
@@ -42,7 +42,12 @@ export function ProductDetail() {
     )
   }
 
-  const imageUrl = productImageUrl(product.image)
+  const galleryImages =
+    product.images && product.images.length > 0
+      ? product.images
+      : product.image
+        ? [product.image]
+        : []
   const inStock = product.is_active && product.stock > 0
   const onSale = product.discount_price != null && product.is_active
 
@@ -65,19 +70,9 @@ export function ProductDetail() {
       <Breadcrumbs crumbs={crumbs} />
 
       <div className="mt-6 flex flex-col gap-8 md:flex-row">
-        {/* Image */}
+        {/* Image gallery / slider */}
         <div className="md:w-1/2">
-          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                alt={product.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-sm text-gray-400">Немає зображення</span>
-            )}
-          </div>
+          <ProductGallery images={galleryImages} alt={product.title} />
         </div>
 
         {/* Details */}

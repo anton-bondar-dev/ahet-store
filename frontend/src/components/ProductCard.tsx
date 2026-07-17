@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { ProductOut } from '../api/generated/onlineStoreAPI.schemas'
-import { productImageUrl } from '../api/http'
 import { useCart } from '../hooks/useCart'
 import { useIsStaff } from '../hooks/useIsStaff'
 import { formatPrice, reviewsPlural } from '../lib/format'
+import { ProductImageCarousel } from './ProductImageCarousel'
 import { WishlistButton } from './WishlistButton'
 
 export function ProductCard({
@@ -17,7 +17,13 @@ export function ProductCard({
   noZoom?: boolean
 }) {
   const isStaff = useIsStaff()
-  const imageUrl = productImageUrl(product.image)
+  // Prefer the gallery; fall back to the legacy single image for safety.
+  const galleryImages =
+    product.images && product.images.length > 0
+      ? product.images
+      : product.image
+        ? [product.image]
+        : []
   const isUnavailable = !product.is_active || product.stock === 0
   const onSale = product.discount_price != null && product.is_active
   const saving = onSale
@@ -41,27 +47,19 @@ export function ProductCard({
         className="absolute right-2 top-2 z-20"
       />
 
-      {/* Image + badges (clicking opens the product page) */}
-      <Link
+      {/* "Новинка" — card-level overlay so it sits above the image slider */}
+      {product.is_new && (
+        <span className="absolute left-2 top-2 z-20 rounded bg-emerald-500 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+          Новинка
+        </span>
+      )}
+
+      {/* Image slider (clicking the image opens the product page) */}
+      <ProductImageCarousel
+        images={galleryImages}
+        alt={product.title}
         to={`/product/${product.slug}`}
-        className="relative flex aspect-square items-center justify-center overflow-hidden rounded-t-lg bg-gray-50"
-      >
-        {product.is_new && (
-          <span className="absolute left-2 top-2 z-10 rounded bg-emerald-500 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-            Новинка
-          </span>
-        )}
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={product.title}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <span className="text-sm text-gray-400">Немає зображення</span>
-        )}
-      </Link>
+      />
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <span className="text-xs font-medium uppercase tracking-wide text-gray-400">

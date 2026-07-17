@@ -60,7 +60,10 @@ class ProductOut(Schema):
     is_active: bool
     discount_price: Optional[Decimal]
     discount_end_date: Optional[datetime]
+    # `image` is the cover (first slide) — kept for backward compatibility;
+    # `images` is the full ordered gallery the slider renders.
     image: Optional[str]
+    images: List[str] = []
     average_rating: float
     reviews_count: int
     is_new: bool
@@ -68,4 +71,9 @@ class ProductOut(Schema):
 
     @staticmethod
     def resolve_image(obj):
-        return obj.image.url if obj.image else None
+        urls = obj.image_urls
+        return urls[0] if urls else None
+
+    @staticmethod
+    def resolve_images(obj):
+        return obj.image_urls

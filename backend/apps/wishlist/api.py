@@ -21,6 +21,7 @@ def _favorites_qs(user):
     return (
         Favorite.objects.filter(user=user)
         .select_related("product__category")
+        .prefetch_related("product__gallery")
         .order_by("-created_at")
     )
 
