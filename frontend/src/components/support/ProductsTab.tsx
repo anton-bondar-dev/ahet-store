@@ -21,7 +21,7 @@ const COLUMNS: { key: SortKey; label: string; align?: string }[] = [
 
 // Internal product-management table: sortable, with quick inline edit of price
 // and stock, plus staff-only 🔥/🧊 trending badges.
-export function ProductsTab() {
+export function ProductsTab({ canEditPrice = false }: { canEditPrice?: boolean }) {
   const queryClient = useQueryClient()
   const { data, isLoading } = useStaffListProducts()
   const update = useStaffUpdateProduct({
@@ -66,7 +66,9 @@ export function ProductsTab() {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm text-gray-500">{products.length} товарів · клік по клітинці «Ціна»/«Залишок» — швидке редагування</p>
+        <p className="text-sm text-gray-500">
+          {products.length} товарів · клік по клітинці «{canEditPrice ? 'Ціна»/«Залишок' : 'Залишок'}» — швидке редагування
+        </p>
         <button
           type="button"
           onClick={() => setSort({ key: 'trending_score', dir: 'desc' })}
@@ -98,11 +100,15 @@ export function ProductsTab() {
                 <tr key={p.id} className={p.is_active ? '' : 'bg-gray-50 text-gray-400'}>
                   <td className="max-w-[16rem] truncate px-4 py-2 font-medium text-gray-900">{p.title}</td>
                   <td className="px-4 py-2">
-                    <EditCell
-                      value={p.price}
-                      display={formatPrice(p.price)}
-                      onSave={(v) => save(p.id, { price: v })}
-                    />
+                    {canEditPrice ? (
+                      <EditCell
+                        value={p.price}
+                        display={formatPrice(p.price)}
+                        onSave={(v) => save(p.id, { price: v })}
+                      />
+                    ) : (
+                      <span className="text-gray-900">{formatPrice(p.price)}</span>
+                    )}
                   </td>
                   <td className="px-4 py-2">
                     <EditCell

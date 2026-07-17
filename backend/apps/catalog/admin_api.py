@@ -59,11 +59,14 @@ def staff_list_products(request):
     operation_id="staff_update_product",
 )
 def staff_update_product(request, product_id: int, payload: ProductEditIn):
-    # Quick inventory edit (price / stock) without the Django admin.
-    _require_staff(request)
+    # Quick inventory edit: stock is open to all operators, but price changes
+    # (financial) are restricted to the Team Lead (least privilege).
+    user = _require_staff(request)
     product = get_object_or_404(Product, id=product_id)
     fields = []
     if payload.price is not None:
+        if not user.is_superuser:
+            raise HttpError(403, "Ціну може змінювати лише тімлід")
         if payload.price < 0:
             raise HttpError(400, "Ціна не може бути від'ємною")
         product.price = payload.price

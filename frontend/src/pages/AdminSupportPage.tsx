@@ -122,7 +122,7 @@ function Workspace({
       </div>
 
       {tab === 'analytics' && <AnalyticsTab isOwner={isOwner} />}
-      {tab === 'products' && <ProductsTab />}
+      {tab === 'products' && <ProductsTab canEditPrice={isOwner} />}
       {tab === 'chats' && <ChatsTab isOwner={isOwner} />}
       {tab === 'comments' && <TaggedCommentsTab />}
       {tab === 'macros' && <MacrosTab />}

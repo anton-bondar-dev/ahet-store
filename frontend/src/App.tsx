@@ -7,10 +7,11 @@ import {
 import type { ProductOut } from './api/generated/onlineStoreAPI.schemas'
 import { ProductCard } from './components/ProductCard'
 
-type SortKey = 'newest' | 'price-asc' | 'price-desc' | 'discount'
+type SortKey = 'newest' | 'popular' | 'price-asc' | 'price-desc' | 'discount'
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'newest', label: 'Спочатку нові' },
+  { value: 'popular', label: 'За популярністю' },
   { value: 'price-asc', label: 'Ціна: за зростанням' },
   { value: 'price-desc', label: 'Ціна: за спаданням' },
   { value: 'discount', label: 'Найбільша знижка' },
@@ -56,6 +57,13 @@ function App() {
     { q: query },
     { query: { enabled: query.length > 0 } },
   )
+  const [sortBy, setSortBy] = useState<SortKey>('newest')
+  // Popularity is a store-wide ranking computed server-side (Trending Engine),
+  // so it can't be sorted client-side — fetch the ordered list on demand.
+  const popularQuery = useListProducts(
+    { sort: 'popular' },
+    { query: { enabled: sortBy === 'popular' && query.length === 0 } },
+  )
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
     () => {
@@ -64,7 +72,6 @@ function App() {
       return Number.isInteger(id) ? id : null
     },
   )
-  const [sortBy, setSortBy] = useState<SortKey>('newest')
 
   const selectCategory = (id: number | null) => {
     setSelectedCategoryId(id)
@@ -147,7 +154,18 @@ function App() {
               </label>
             </div>
 
-            {selectedCategoryId === null ? (
+            {sortBy === 'popular' ? (
+              // Store-wide popularity ranking → a flat grid (server-ordered).
+              <CategoryGrid
+                products={
+                  selectedCategoryId === null
+                    ? (popularQuery.data?.data ?? [])
+                    : (popularQuery.data?.data ?? []).filter(
+                        (p) => p.category.id === selectedCategoryId,
+                      )
+                }
+              />
+            ) : selectedCategoryId === null ? (
               <AllProductsView
                 products={products}
                 categories={categories}
