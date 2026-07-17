@@ -36,6 +36,7 @@ import type {
   AdminTicketOut,
   ApprovalOut,
   AssignTagIn,
+  AssignTicketIn,
   AuditLogOut,
   BlockUserIn,
   CancelBonusIn,
@@ -49,7 +50,9 @@ import type {
   MacroOut,
   MacroRenderIn,
   OkOut,
+  OperatorStatusIn,
   PresenceIn,
+  PriorityIn,
   RatingIn,
   RenderedTextOut,
   StaffDossierOut,
@@ -2085,6 +2088,191 @@ export function useListAuditLog<TData = Awaited<ReturnType<typeof listAuditLog>>
 
 
 /**
+ * @summary Set Operator Status
+ */
+export const setOperatorStatus = (
+    operatorStatusIn: OperatorStatusIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/me/status`,
+      operatorStatusIn,options
+    );
+  }
+
+
+
+
+export const getSetOperatorStatusMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOperatorStatus>>, TError,{data: OperatorStatusIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof setOperatorStatus>>, TError,{data: OperatorStatusIn}, TContext> => {
+
+const mutationKey = ['setOperatorStatus'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setOperatorStatus>>, {data: OperatorStatusIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setOperatorStatus(data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetOperatorStatusMutationResult = NonNullable<Awaited<ReturnType<typeof setOperatorStatus>>>
+    export type SetOperatorStatusMutationBody = OperatorStatusIn
+    export type SetOperatorStatusMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Set Operator Status
+ */
+export const useSetOperatorStatus = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setOperatorStatus>>, TError,{data: OperatorStatusIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setOperatorStatus>>,
+        TError,
+        {data: OperatorStatusIn},
+        TContext
+      > => {
+      return useMutation(getSetOperatorStatusMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Assign Ticket
+ */
+export const assignTicket = (
+    ticketId: number,
+    assignTicketIn: AssignTicketIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AdminTicketDetailOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/tickets/${ticketId}/assign`,
+      assignTicketIn,options
+    );
+  }
+
+
+
+
+export const getAssignTicketMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignTicket>>, TError,{ticketId: number;data: AssignTicketIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof assignTicket>>, TError,{ticketId: number;data: AssignTicketIn}, TContext> => {
+
+const mutationKey = ['assignTicket'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof assignTicket>>, {ticketId: number;data: AssignTicketIn}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  assignTicket(ticketId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AssignTicketMutationResult = NonNullable<Awaited<ReturnType<typeof assignTicket>>>
+    export type AssignTicketMutationBody = AssignTicketIn
+    export type AssignTicketMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Assign Ticket
+ */
+export const useAssignTicket = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof assignTicket>>, TError,{ticketId: number;data: AssignTicketIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof assignTicket>>,
+        TError,
+        {ticketId: number;data: AssignTicketIn},
+        TContext
+      > => {
+      return useMutation(getAssignTicketMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Set Priority
+ */
+export const setPriority = (
+    ticketId: number,
+    priorityIn: PriorityIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<AdminTicketDetailOut>> => {
+
+
+    return axios.default.post(
+      `/api/support/admin/tickets/${ticketId}/priority`,
+      priorityIn,options
+    );
+  }
+
+
+
+
+export const getSetPriorityMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPriority>>, TError,{ticketId: number;data: PriorityIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof setPriority>>, TError,{ticketId: number;data: PriorityIn}, TContext> => {
+
+const mutationKey = ['setPriority'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setPriority>>, {ticketId: number;data: PriorityIn}> = (props) => {
+          const {ticketId,data} = props ?? {};
+
+          return  setPriority(ticketId,data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetPriorityMutationResult = NonNullable<Awaited<ReturnType<typeof setPriority>>>
+    export type SetPriorityMutationBody = PriorityIn
+    export type SetPriorityMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Set Priority
+ */
+export const useSetPriority = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setPriority>>, TError,{ticketId: number;data: PriorityIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof setPriority>>,
+        TError,
+        {ticketId: number;data: PriorityIn},
+        TContext
+      > => {
+      return useMutation(getSetPriorityMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Cancel Bonus
  */
 export const cancelBonus = (

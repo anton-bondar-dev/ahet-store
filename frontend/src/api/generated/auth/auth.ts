@@ -40,6 +40,7 @@ import type {
   RegisterIn,
   Set2faMethodIn,
   TelegramLinkOut,
+  TokenPair,
   UserOut,
   VerifyOtpIn
 } from '../onlineStoreAPI.schemas';
@@ -580,6 +581,67 @@ export const useRefreshToken = <TError = AxiosError<unknown>,
         TContext
       > => {
       return useMutation(getRefreshTokenMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Logout Other Sessions
+ */
+export const logoutOtherSessions = (
+     options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<TokenPair>> => {
+
+
+    return axios.default.post(
+      `/api/auth/logout-others`,
+      undefined,options
+    );
+  }
+
+
+
+
+export const getLogoutOtherSessionsMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutOtherSessions>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof logoutOtherSessions>>, TError,void, TContext> => {
+
+const mutationKey = ['logoutOtherSessions'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logoutOtherSessions>>, void> = () => {
+
+
+          return  logoutOtherSessions(axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogoutOtherSessionsMutationResult = NonNullable<Awaited<ReturnType<typeof logoutOtherSessions>>>
+
+    export type LogoutOtherSessionsMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Logout Other Sessions
+ */
+export const useLogoutOtherSessions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logoutOtherSessions>>, TError,void, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof logoutOtherSessions>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getLogoutOtherSessionsMutationOptions(options), queryClient);
     }
     /**
  * @summary Me

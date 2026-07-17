@@ -149,6 +149,7 @@ export interface UserOut {
   bonus_balance?: number;
   is_staff?: boolean;
   is_superuser?: boolean;
+  operator_status?: string;
 }
 
 export interface AuthResult {
@@ -162,13 +163,13 @@ export interface AuthResult {
 }
 
 export interface RegisterIn {
-  username: string;
+  name: string;
   email: string;
   password: string;
 }
 
 export interface LoginIn {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -189,6 +190,11 @@ export interface AccessOut {
 }
 
 export interface RefreshIn {
+  refresh: string;
+}
+
+export interface TokenPair {
+  access: string;
   refresh: string;
 }
 
@@ -213,9 +219,9 @@ export interface ProfileOut {
 }
 
 export interface ProfileIn {
-  username?: string;
   first_name?: string;
   last_name?: string;
+  email?: string;
   phone_number?: string;
   city?: string;
   delivery_address?: string;
@@ -248,6 +254,7 @@ export interface UserChatOut {
 
 export interface ChatMessageIn {
   text: string;
+  is_internal?: boolean;
 }
 
 export interface OkOut {
@@ -261,6 +268,9 @@ export interface RatingIn {
 export interface AdminTicketOut {
   id: number;
   user_username: string;
+  support_id?: string | null;
+  assigned_to?: string | null;
+  priority?: string;
   status: string;
   subject: string;
   updated_at: string;
@@ -276,6 +286,7 @@ export interface AdminChatMessageOut {
   sender_name: string;
   from_staff: boolean;
   is_system?: boolean;
+  is_internal?: boolean;
   meta?: AdminChatMessageOutMeta;
   text: string;
   created_at: string;
@@ -298,9 +309,16 @@ export interface AdminTicketDetailOut {
   user_id: number;
   user_username: string;
   customer_name: string;
+  customer_support_id?: string | null;
   customer_blocked?: boolean;
   status: string;
+  priority?: string;
   is_overdue?: boolean;
+  assigned_to_id?: number | null;
+  assigned_to_name?: string | null;
+  customer_last_seen?: string | null;
+  customer_device?: string;
+  customer_online?: boolean;
   messages: AdminChatMessageOut[];
   tags: CustomerTagOut[];
   viewers: TicketPresenceOut[];
@@ -409,6 +427,18 @@ export interface AuditLogOut {
   created_at: string;
 }
 
+export interface OperatorStatusIn {
+  status: string;
+}
+
+export interface AssignTicketIn {
+  operator_id?: number | null;
+}
+
+export interface PriorityIn {
+  priority: string;
+}
+
 export interface CancelBonusIn {
   message_id: number;
 }
@@ -418,6 +448,7 @@ export interface StaffDossierOut {
   username: string;
   name: string;
   role: string;
+  status?: string;
   is_active: boolean;
   resolved_tickets: number;
   comments_resolved: number;
