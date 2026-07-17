@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = useCallback(
-    async (username: string, password: string) => {
-      const res = await loginApi({ username, password })
+    async (email: string, password: string) => {
+      const res = await loginApi({ email, password })
       if (res.data.status === 'authed') applyAuthed(res.data)
       return res.data
     },
@@ -96,8 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const register = useCallback(
-    async (username: string, email: string, password: string) => {
-      const res = await registerApi({ username, email, password })
+    async (name: string, email: string, password: string) => {
+      const res = await registerApi({ name, email, password })
       if (res.data.status === 'authed') applyAuthed(res.data)
       return res.data
     },

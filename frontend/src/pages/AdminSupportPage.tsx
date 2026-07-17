@@ -5,14 +5,18 @@ import {
   getGetTicketQueryKey,
   getListTicketsQueryKey,
   renderMacroForTicket,
+  useAssignTicket,
   useCancelBonus,
   useCloseTicket,
   useGetTicket,
   useImpersonateUser,
   useListApprovals,
   useListMacros,
+  useListStaff,
   useListTickets,
   useReplyTicket,
+  useSetOperatorStatus,
+  useSetPriority,
   useTicketAction,
   useTicketPresence,
 } from '../api/generated/support/support'
@@ -26,6 +30,13 @@ import { TaggedCommentsTab } from '../components/support/TaggedCommentsTab'
 import { useAuth } from '../hooks/useAuth'
 import { startImpersonation } from '../lib/impersonation'
 import { roleLabel } from '../lib/roles'
+
+const PRIORITY_META: Record<string, { label: string; cls: string; dot: string }> = {
+  low: { label: 'Низький', cls: 'border-gray-300 bg-gray-100 text-gray-600', dot: 'bg-gray-400' },
+  normal: { label: 'Звичайний', cls: 'border-gray-300 bg-white text-gray-600', dot: 'bg-gray-300' },
+  high: { label: 'Високий', cls: 'border-orange-300 bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
+  urgent: { label: 'Терміновий', cls: 'border-red-300 bg-red-100 text-red-700', dot: 'bg-red-500' },
+}
 
 const QUICK_REPLIES = [
   'Вітаю! Уточніть, будь ласка, номер вашого замовлення.',
@@ -79,7 +90,8 @@ function Workspace({
         <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white">
           {roleLabel(user)}
         </span>
-        <Link to="/account" className="ml-auto text-sm text-gray-500 hover:text-gray-900">
+        <StatusToggle />
+        <Link to="/account" className="text-sm text-gray-500 hover:text-gray-900">
           ← Кабінет
         </Link>
       </div>
@@ -115,6 +127,80 @@ function Workspace({
   )
 }
 
+function AssignControl({
+  ticketId,
+  assignedName,
+  isOwner,
+  onDone,
+}: {
+  ticketId: number
+  assignedName: string | null
+  isOwner: boolean
+  onDone: () => void
+}) {
+  const assign = useAssignTicket({ mutation: { onSuccess: onDone } })
+  const staffQuery = useListStaff({ query: { enabled: isOwner } })
+  const operators = (staffQuery.data?.data ?? []).filter((s) => s.role === 'operator' && s.is_active)
+
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-gray-500">
+        {assignedName ? (
+          <>
+            Призначено: <strong className="text-gray-800">{assignedName}</strong>
+          </>
+        ) : (
+          'Не призначено'
+        )}
+      </span>
+      <button
+        type="button"
+        onClick={() => assign.mutate({ ticketId, data: {} })}
+        className="rounded border border-gray-300 px-2 py-0.5 text-gray-600 hover:bg-gray-50"
+      >
+        Взяти собі
+      </button>
+      {isOwner && operators.length > 0 && (
+        <select
+          value=""
+          onChange={(e) => {
+            const id = Number(e.target.value)
+            if (id) assign.mutate({ ticketId, data: { operator_id: id } })
+            e.currentTarget.value = ''
+          }}
+          className="rounded border border-gray-300 px-1 py-0.5 text-gray-600"
+        >
+          <option value="">Призначити…</option>
+          {operators.map((o) => (
+            <option key={o.id} value={o.id}>{o.name}</option>
+          ))}
+        </select>
+      )}
+    </div>
+  )
+}
+
+function StatusToggle() {
+  const { user, refreshUser } = useAuth()
+  const setStatus = useSetOperatorStatus()
+  const away = user?.operator_status === 'away'
+  const toggle = async () => {
+    await setStatus.mutateAsync({ data: { status: away ? 'online' : 'away' } }).catch(() => {})
+    refreshUser()
+  }
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+      title="Перемкнути доступність"
+    >
+      <span className={`h-2 w-2 rounded-full ${away ? 'bg-gray-300' : 'bg-emerald-500'}`} />
+      {away ? 'Відійшов' : 'Онлайн'}
+    </button>
+  )
+}
+
 function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -137,6 +223,7 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
   const [showArchived, setShowArchived] = useState(false)
   const [search, setSearch] = useState('')
   const [text, setText] = useState('')
+  const [internalMode, setInternalMode] = useState(false)
   const [actionMsg, setActionMsg] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const lastTypingRef = useRef(0)
@@ -167,13 +254,19 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
     },
   })
   const cancelBonusMutation = useCancelBonus({ mutation: { onSuccess: invalidate } })
+  const priorityMutation = useSetPriority({ mutation: { onSuccess: invalidate } })
   const presenceMutation = useTicketPresence()
   const impersonateMutation = useImpersonateUser()
 
   const allTickets = ticketsQuery.data?.data ?? []
   const q = search.trim().toLowerCase()
   const tickets = q
-    ? allTickets.filter((t) => t.user_username.toLowerCase().includes(q))
+    ? allTickets.filter(
+        (t) =>
+          t.user_username.toLowerCase().includes(q) ||
+          (t.support_id ?? '').toLowerCase().includes(q) ||
+          (t.assigned_to ?? '').toLowerCase().includes(q),
+      )
     : allTickets
   const ticket = ticketQuery.data?.data
   const messages = ticket?.messages ?? []
@@ -211,7 +304,10 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
     if (!trimmed || selectedId == null || replyMutation.isPending) return
     setText('')
     try {
-      await replyMutation.mutateAsync({ ticketId: selectedId, data: { text: trimmed } })
+      await replyMutation.mutateAsync({
+        ticketId: selectedId,
+        data: { text: trimmed, is_internal: internalMode },
+      })
     } catch {
       setText(trimmed)
     }
@@ -262,7 +358,7 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Пошук за клієнтом…"
+            placeholder="Пошук: клієнт, ID, оператор…"
             className="w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
           />
         </div>
@@ -278,11 +374,20 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
                 }`}
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-900">
-                    {t.is_overdue && <span title="Прострочено (SLA)">🚨 </span>}
-                    {t.user_username}
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium text-gray-900">
+                    {t.priority && t.priority !== 'normal' && (
+                      <span
+                        className={`h-2 w-2 shrink-0 rounded-full ${PRIORITY_META[t.priority]?.dot ?? 'bg-gray-300'}`}
+                        title={`Пріоритет: ${PRIORITY_META[t.priority]?.label ?? t.priority}`}
+                      />
+                    )}
+                    {t.is_overdue && <span title="Прострочено (SLA)">🚨</span>}
+                    <span className="truncate">{t.user_username}</span>
                   </p>
-                  <p className="text-xs text-gray-400">{t.status === 'open' ? 'Відкрито' : 'Закрито'}</p>
+                  <p className="truncate text-xs text-gray-400">
+                    {t.support_id && <span className="font-mono">{t.support_id}</span>}
+                    {t.assigned_to && <span> · 👤 {t.assigned_to}</span>}
+                  </p>
                 </div>
                 {(t.unread_count ?? 0) > 0 && (
                   <span className="shrink-0 rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
@@ -312,6 +417,9 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
                     <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">Закрито</span>
                   )}
                 </p>
+                {ticket?.customer_support_id && (
+                  <p className="font-mono text-xs text-gray-400">{ticket.customer_support_id}</p>
+                )}
                 {anyViewer && (
                   <p className="text-xs text-amber-600">
                     {typingViewer
@@ -319,8 +427,24 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
                       : `${anyViewer.staff_name} переглядає цей чат`}
                   </p>
                 )}
+                <AssignControl
+                  ticketId={selectedId}
+                  assignedName={ticket?.assigned_to_name ?? null}
+                  isOwner={isOwner}
+                  onDone={invalidate}
+                />
               </div>
-              <div className="flex shrink-0 gap-2">
+              <div className="flex shrink-0 items-start gap-2">
+                <select
+                  value={ticket?.priority ?? 'normal'}
+                  onChange={(e) => priorityMutation.mutate({ ticketId: selectedId, data: { priority: e.target.value } })}
+                  className={`rounded-md border px-2 py-1 text-xs font-semibold focus:outline-none ${PRIORITY_META[ticket?.priority ?? 'normal'].cls}`}
+                  title="Пріоритет"
+                >
+                  {Object.entries(PRIORITY_META).map(([key, m]) => (
+                    <option key={key} value={key}>{m.label}</option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={impersonate}
@@ -365,6 +489,18 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
                     </div>
                   )
                 }
+                if (m.is_internal) {
+                  return (
+                    <div key={m.id} className="flex justify-end">
+                      <div className="max-w-[75%] rounded-2xl rounded-br-sm bg-amber-100 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-300">
+                        <p className="mb-0.5 text-xs font-semibold text-amber-700">
+                          🔒 Внутрішня нотатка · {m.sender_name}
+                        </p>
+                        <p className="whitespace-pre-wrap break-words">{m.text}</p>
+                      </div>
+                    </div>
+                  )
+                }
                 const staff = m.from_staff
                 return (
                   <div key={m.id} className={`flex ${staff ? 'justify-end' : 'justify-start'}`}>
@@ -402,6 +538,15 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
               ))}
             </div>
 
+            <label className="flex items-center gap-1.5 px-3 pt-1 text-xs text-gray-600">
+              <input
+                type="checkbox"
+                checked={internalMode}
+                onChange={(e) => setInternalMode(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+              />
+              Внутрішня нотатка (не видно клієнту)
+            </label>
             <div className="flex items-center gap-2 p-2">
               <input
                 value={text}
@@ -412,16 +557,22 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
                     reply()
                   }
                 }}
-                placeholder="Відповідь від імені ahetStore…"
-                className="min-w-0 flex-1 rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-900 focus:border-gray-500 focus:outline-none"
+                placeholder={internalMode ? 'Внутрішня нотатка для команди…' : 'Відповідь від імені ahetStore…'}
+                className={`min-w-0 flex-1 rounded-full border px-4 py-2 text-sm focus:outline-none ${
+                  internalMode
+                    ? 'border-amber-300 bg-amber-50 text-amber-900 focus:border-amber-400'
+                    : 'border-gray-300 text-gray-900 focus:border-gray-500'
+                }`}
               />
               <button
                 type="button"
                 onClick={reply}
                 disabled={!text.trim() || replyMutation.isPending}
-                className="shrink-0 rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  internalMode ? 'bg-amber-600 hover:bg-amber-700' : 'bg-gray-900 hover:bg-gray-700'
+                }`}
               >
-                Надіслати
+                {internalMode ? 'Додати нотатку' : 'Надіслати'}
               </button>
             </div>
           </>
@@ -435,6 +586,10 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
             ticketId={selectedId}
             userId={ticket.user_id}
             tags={ticket.tags}
+            supportId={ticket.customer_support_id}
+            lastSeen={ticket.customer_last_seen}
+            device={ticket.customer_device}
+            online={ticket.customer_online}
             isOwner={isOwner}
             blocked={ticket.customer_blocked}
           />

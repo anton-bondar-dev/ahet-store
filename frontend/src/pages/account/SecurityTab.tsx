@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  logoutOtherSessions,
   set2faMethod,
   telegramLinkStart,
   telegramLinkStatus,
 } from '../../api/generated/auth/auth'
 import { useAuth } from '../../hooks/useAuth'
+import { setTokens } from '../../lib/authToken'
 
 type Method = 'none' | 'telegram' | 'email'
 
@@ -13,7 +15,24 @@ export function SecurityTab() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [linkingTelegram, setLinkingTelegram] = useState(false)
+  const [sessionMsg, setSessionMsg] = useState<string | null>(null)
+  const [endingSessions, setEndingSessions] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const endOtherSessions = async () => {
+    setSessionMsg(null)
+    setEndingSessions(true)
+    try {
+      const res = await logoutOtherSessions()
+      // Swap this session onto fresh tokens; all other devices are now logged out.
+      setTokens(res.data.access, res.data.refresh)
+      setSessionMsg('Усі інші сеанси завершено ✓')
+    } catch {
+      setSessionMsg('Не вдалося завершити сеанси')
+    } finally {
+      setEndingSessions(false)
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -102,6 +121,23 @@ export function SecurityTab() {
       </div>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+      {/* Log out of every other device */}
+      <div className="mt-8 border-t border-gray-100 pt-5">
+        <h3 className="text-sm font-semibold text-gray-900">Активні сеанси</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Вийти з акаунта на всіх інших пристроях (цей залишиться активним).
+        </p>
+        <button
+          type="button"
+          onClick={endOtherSessions}
+          disabled={endingSessions}
+          className="mt-3 rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+        >
+          {endingSessions ? 'Завершення…' : 'Завершити всі інші сеанси'}
+        </button>
+        {sessionMsg && <span className="ml-3 text-sm text-green-600">{sessionMsg}</span>}
+      </div>
     </div>
   )
 }

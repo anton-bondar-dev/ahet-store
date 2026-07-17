@@ -3,18 +3,18 @@ import { getProfile, updateProfile } from '../../api/generated/accounts/accounts
 import { useAuth } from '../../hooks/useAuth'
 
 type Form = {
-  username: string
   first_name: string
   last_name: string
+  email: string
   phone_number: string
   city: string
   delivery_address: string
 }
 
 const EMPTY: Form = {
-  username: '',
   first_name: '',
   last_name: '',
+  email: '',
   phone_number: '',
   city: '',
   delivery_address: '',
@@ -23,7 +23,6 @@ const EMPTY: Form = {
 export function PersonalInfoTab({ nameOnly = false }: { nameOnly?: boolean }) {
   const { refreshUser } = useAuth()
   const [form, setForm] = useState<Form>(EMPTY)
-  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -36,14 +35,13 @@ export function PersonalInfoTab({ nameOnly = false }: { nameOnly?: boolean }) {
         if (!active) return
         const d = res.data
         setForm({
-          username: d.username,
           first_name: d.first_name,
           last_name: d.last_name,
+          email: d.email,
           phone_number: d.phone_number,
           city: d.city,
           delivery_address: d.delivery_address,
         })
-        setEmail(d.email)
       })
       .finally(() => active && setLoading(false))
     return () => {
@@ -64,9 +62,9 @@ export function PersonalInfoTab({ nameOnly = false }: { nameOnly?: boolean }) {
     try {
       await updateProfile(form)
       setSaved(true)
-      await refreshUser() // header / review author names reflect the new username
+      await refreshUser() // header / review author names reflect the new name/email
     } catch {
-      setError('Не вдалося зберегти. Можливо, це ім’я користувача вже зайняте.')
+      setError('Не вдалося зберегти. Можливо, цей email вже використовується.')
     } finally {
       setSaving(false)
     }
@@ -91,13 +89,7 @@ export function PersonalInfoTab({ nameOnly = false }: { nameOnly?: boolean }) {
           <Field label="Прізвище" value={form.last_name} onChange={set('last_name')} />
           {!nameOnly && (
             <>
-              <Field
-                label="Ім'я користувача (логін)"
-                value={form.username}
-                onChange={set('username')}
-                required
-              />
-              <Field label="Email" value={email} disabled />
+              <Field label="Email" type="email" value={form.email} onChange={set('email')} required />
               <Field label="Телефон" value={form.phone_number} onChange={set('phone_number')} />
               <Field label="Місто" value={form.city} onChange={set('city')} />
               <Field

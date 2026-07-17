@@ -12,6 +12,15 @@ import {
 import type { CustomerTagOut } from '../../api/generated/onlineStoreAPI.schemas'
 import { formatPrice } from '../../lib/format'
 
+function relativeTime(iso: string): string {
+  const diffMin = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+  if (diffMin < 1) return 'щойно'
+  if (diffMin < 60) return `${diffMin} хв тому`
+  const h = Math.round(diffMin / 60)
+  if (h < 24) return `${h} год тому`
+  return `${Math.round(h / 24)} дн тому`
+}
+
 const ORDER_STATUS_LABELS: Record<string, string> = {
   new: 'Новий',
   processing: 'Обробка',
@@ -26,12 +35,20 @@ export function CustomerContext({
   ticketId,
   userId,
   tags,
+  supportId,
+  lastSeen,
+  device,
+  online = false,
   isOwner = false,
   blocked = false,
 }: {
   ticketId: number
   userId: number
   tags: CustomerTagOut[]
+  supportId?: string | null
+  lastSeen?: string | null
+  device?: string
+  online?: boolean
   isOwner?: boolean
   blocked?: boolean
 }) {
@@ -53,6 +70,17 @@ export function CustomerContext({
 
   return (
     <aside className="space-y-4">
+      {supportId && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+          <p className="text-xs text-gray-500">ID клієнта</p>
+          <p className="font-mono text-sm font-semibold text-gray-900">{supportId}</p>
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+            <span className={`h-2 w-2 rounded-full ${online ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+            {online ? 'В мережі' : lastSeen ? `Був(ла) ${relativeTime(lastSeen)}` : 'Немає даних'}
+            {device && <span>· {device}</span>}
+          </p>
+        </div>
+      )}
       {blocked && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
           🚫 Клієнта заблоковано

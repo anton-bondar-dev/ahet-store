@@ -25,6 +25,7 @@ export function StaffTable() {
           <tr>
             <th className="px-4 py-2">Оператор</th>
             <th className="px-4 py-2">Роль</th>
+            <th className="px-4 py-2">Доступність</th>
             <th className="px-4 py-2">Закрито</th>
             <th className="px-4 py-2">Коментарі</th>
             <th className="px-4 py-2">Рейтинг</th>
@@ -41,6 +42,12 @@ export function StaffTable() {
               </td>
               <td className="px-4 py-2 text-gray-600">
                 {s.role === 'owner' ? 'Тімлід' : 'Оператор'}
+              </td>
+              <td className="px-4 py-2">
+                <span className={`inline-flex items-center gap-1 text-xs ${s.status === 'away' ? 'text-gray-400' : 'text-emerald-600'}`}>
+                  <span className={`h-2 w-2 rounded-full ${s.status === 'away' ? 'bg-gray-300' : 'bg-emerald-500'}`} />
+                  {s.status === 'away' ? 'Відійшов' : 'Онлайн'}
+                </span>
               </td>
               <td className="px-4 py-2 text-gray-700">{s.resolved_tickets}</td>
               <td className="px-4 py-2 text-gray-700">{s.comments_resolved}</td>

@@ -7,7 +7,7 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const { register } = useAuth()
 
-  const [username, setUsername] = useState('')
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -18,10 +18,10 @@ export function RegisterPage() {
     setError(null)
     setBusy(true)
     try {
-      const result = await register(username, email, password)
+      const result = await register(name, email, password)
       if (result.status === 'authed') navigate('/')
     } catch {
-      setError('Не вдалося зареєструватися. Можливо, ім’я вже зайняте.')
+      setError('Не вдалося зареєструватися. Можливо, акаунт із таким email вже існує.')
     } finally {
       setBusy(false)
     }
@@ -32,11 +32,11 @@ export function RegisterPage() {
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Реєстрація</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-gray-500">Ім'я користувача</span>
+          <span className="text-xs font-medium text-gray-500">Ім'я</span>
           <input
             required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
           />
         </label>

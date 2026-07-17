@@ -17,14 +17,14 @@ export function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
 
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const submitLogin = async () => {
-    const result = await login(username, password)
+    const result = await login(email, password)
     if (result.status === 'authed') {
       navigate('/')
     } else if (result.status === 'pending' && result.challenge_id) {
@@ -43,7 +43,7 @@ export function LoginPage() {
     try {
       await submitLogin()
     } catch {
-      setError('Невірний логін або пароль')
+      setError('Невірний email або пароль')
     } finally {
       setBusy(false)
     }
@@ -73,11 +73,12 @@ export function LoginPage() {
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Вхід</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-gray-500">Ім'я користувача</span>
+          <span className="text-xs font-medium text-gray-500">Email</span>
           <input
+            type="email"
             required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
           />
         </label>
