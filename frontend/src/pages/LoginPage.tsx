@@ -5,6 +5,7 @@ import {
   verifyLoginChallenge,
 } from '../api/generated/auth/auth'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
+import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../hooks/useAuth'
 
 type Pending = {
@@ -84,12 +85,11 @@ export function LoginPage() {
         </label>
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium text-gray-500">Пароль</span>
-          <input
-            type="password"
+          <PasswordInput
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
           />
         </label>
 

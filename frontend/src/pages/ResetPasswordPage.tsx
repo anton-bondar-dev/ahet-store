@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { confirmPasswordReset } from '../api/generated/auth/auth'
+import { PasswordInput } from '../components/PasswordInput'
 import { useAuth } from '../hooks/useAuth'
 import { apiErrorMessage } from '../lib/apiError'
 import { setTokens } from '../lib/authToken'
@@ -65,23 +66,19 @@ export function ResetPasswordPage() {
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-4">
           <p className="text-sm text-gray-500">Введіть новий пароль для акаунта.</p>
-          <input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             required
             value={next}
             onChange={(e) => setNext(e.target.value)}
             placeholder="Новий пароль"
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
           />
-          <input
-            type="password"
+          <PasswordInput
             autoComplete="new-password"
             required
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Повторіть новий пароль"
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
           <button

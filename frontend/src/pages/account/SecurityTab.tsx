@@ -6,6 +6,7 @@ import {
   telegramLinkStart,
   telegramLinkStatus,
 } from '../../api/generated/auth/auth'
+import { PasswordInput } from '../../components/PasswordInput'
 import { useAuth } from '../../hooks/useAuth'
 import { apiErrorMessage } from '../../lib/apiError'
 import { setTokens } from '../../lib/authToken'
@@ -194,32 +195,26 @@ function ChangePasswordForm() {
         Після зміни пароля всі інші сеанси буде завершено.
       </p>
       <form onSubmit={submit} className="mt-3 flex max-w-sm flex-col gap-3">
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="current-password"
           required
           value={current}
           onChange={(e) => setCurrent(e.target.value)}
           placeholder="Поточний пароль"
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
         />
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           required
           value={next}
           onChange={(e) => setNext(e.target.value)}
           placeholder="Новий пароль"
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
         />
-        <input
-          type="password"
+        <PasswordInput
           autoComplete="new-password"
           required
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           placeholder="Повторіть новий пароль"
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:outline-none"
         />
         <button
           type="submit"
