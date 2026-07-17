@@ -102,6 +102,15 @@ function App() {
   const products = productsQuery.data?.data ?? []
   const categories = categoriesQuery.data?.data ?? []
 
+  // Popularity ranking (product id → global position) from the server-sorted
+  // list, so we can order products by popularity while keeping the normal
+  // category-grouped layout.
+  const popularRank = new Map(
+    (popularQuery.data?.data ?? []).map((p, i) => [p.id, i] as const),
+  )
+  const byPopularity = (a: ProductOut, b: ProductOut) =>
+    (popularRank.get(a.id) ?? Infinity) - (popularRank.get(b.id) ?? Infinity)
+
   const countByCategory = new Map<number, number>()
   for (const product of products) {
     countByCategory.set(
@@ -154,29 +163,23 @@ function App() {
               </label>
             </div>
 
-            {sortBy === 'popular' ? (
-              // Store-wide popularity ranking → a flat grid (server-ordered).
-              <CategoryGrid
-                products={
-                  selectedCategoryId === null
-                    ? (popularQuery.data?.data ?? [])
-                    : (popularQuery.data?.data ?? []).filter(
-                        (p) => p.category.id === selectedCategoryId,
-                      )
-                }
-              />
-            ) : selectedCategoryId === null ? (
+            {selectedCategoryId === null ? (
               <AllProductsView
                 products={products}
                 categories={categories}
                 sortBy={sortBy}
+                byPopularity={byPopularity}
               />
             ) : (
               <CategoryGrid
-                products={sortProducts(
-                  products.filter((p) => p.category.id === selectedCategoryId),
-                  sortBy,
-                )}
+                products={(() => {
+                  const inCategory = products.filter(
+                    (p) => p.category.id === selectedCategoryId,
+                  )
+                  return sortBy === 'popular'
+                    ? [...inCategory].sort(byPopularity)
+                    : sortProducts(inCategory, sortBy)
+                })()}
               />
             )}
           </>
@@ -217,19 +220,24 @@ function AllProductsView({
   products,
   categories,
   sortBy,
+  byPopularity,
 }: {
   products: ProductOut[]
   categories: { id: number; name: string }[]
   sortBy: SortKey
+  byPopularity: (a: ProductOut, b: ProductOut) => number
 }) {
   const sections = categories
-    .map((category) => ({
-      category,
-      items: sortProducts(
-        products.filter((p) => p.category.id === category.id),
-        sortBy,
-      ),
-    }))
+    .map((category) => {
+      const inCategory = products.filter((p) => p.category.id === category.id)
+      return {
+        category,
+        items:
+          sortBy === 'popular'
+            ? [...inCategory].sort(byPopularity)
+            : sortProducts(inCategory, sortBy),
+      }
+    })
     .filter((section) => section.items.length > 0)
 
   if (sections.length === 0) {
