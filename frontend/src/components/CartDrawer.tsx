@@ -76,7 +76,7 @@ export function CartDrawer() {
             className={`block rounded-md px-4 py-2.5 text-center text-sm font-semibold text-white transition ${
               totalQuantity === 0
                 ? 'pointer-events-none bg-gray-300'
-                : 'bg-gray-900 hover:bg-gray-700'
+                : 'bg-brand hover:bg-brand-dark'
             }`}
           >
             Перейти до оформлення замовлення

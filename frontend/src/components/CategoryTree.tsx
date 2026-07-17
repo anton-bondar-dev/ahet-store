@@ -32,8 +32,10 @@ export function CategoryTree({
         return (
           <li key={node.id}>
             <div
-              className={`flex items-center rounded-md transition ${
-                isActive ? 'bg-gray-100' : 'hover:bg-gray-50'
+              className={`flex items-center rounded-md border-l-2 transition ${
+                isActive
+                  ? 'border-brand bg-brand-light'
+                  : 'border-transparent hover:bg-gray-50'
               }`}
               style={{ paddingLeft: `${depth * 14}px` }}
             >
@@ -66,7 +68,7 @@ export function CategoryTree({
                 onClick={() => onSelect(node.id)}
                 className={`flex flex-1 items-center justify-between gap-2 rounded-md py-1.5 pr-2 text-left text-sm transition ${
                   isActive
-                    ? 'font-semibold text-gray-900'
+                    ? 'font-semibold text-brand'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >

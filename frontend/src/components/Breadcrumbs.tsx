@@ -23,20 +23,22 @@ export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
               {crumb.node ? (
                 crumb.node
               ) : crumb.to ? (
-                <Link to={crumb.to} className="transition hover:text-gray-900">
+                <Link to={crumb.to} className="transition hover:text-brand">
                   {crumb.label}
                 </Link>
               ) : crumb.onClick ? (
                 <button
                   type="button"
                   onClick={crumb.onClick}
-                  className="transition hover:text-gray-900"
+                  className="transition hover:text-brand"
                 >
                   {crumb.label}
                 </button>
               ) : (
                 <span
-                  className={`truncate ${isLast ? 'max-w-xs text-gray-700' : ''}`}
+                  className={`truncate ${
+                    isLast ? 'max-w-xs font-medium text-brand' : ''
+                  }`}
                   title={crumb.label}
                   aria-current={isLast ? 'page' : undefined}
                 >

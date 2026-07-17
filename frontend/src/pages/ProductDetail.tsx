@@ -82,7 +82,7 @@ export function ProductDetail() {
           <div className="flex items-baseline gap-3">
             {onSale ? (
               <>
-                <span className="text-3xl font-bold text-gray-900">
+                <span className="text-3xl font-extrabold tracking-tight text-brand">
                   {formatPrice(product.discount_price!)}
                 </span>
                 <span className="text-lg text-gray-400 line-through">
@@ -90,7 +90,7 @@ export function ProductDetail() {
                 </span>
               </>
             ) : (
-              <span className="text-3xl font-bold text-gray-900">
+              <span className="text-3xl font-extrabold tracking-tight text-gray-900">
                 {formatPrice(product.price)}
               </span>
             )}
@@ -168,8 +168,8 @@ function AddToCartButton({
       type="button"
       onClick={handleClick}
       disabled={disabled || isAdding}
-      className={`w-fit rounded-md px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
-        added ? 'bg-green-600' : 'bg-gray-900 hover:bg-gray-700'
+      className={`w-fit rounded-md px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
+        added ? 'bg-green-600' : 'bg-brand hover:bg-brand-dark'
       }`}
     >
       {disabled ? 'Немає в наявності' : added ? 'Додано!' : 'У кошик'}

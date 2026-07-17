@@ -67,7 +67,7 @@ export function RegisterPage() {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-md bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:opacity-60"
+          className="rounded-md bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60"
         >
           {busy ? 'Реєстрація…' : 'Зареєструватися'}
         </button>

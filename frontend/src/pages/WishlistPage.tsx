@@ -36,7 +36,7 @@ export function WishlistPage() {
           </p>
           <Link
             to="/"
-            className="inline-block rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700"
+            className="inline-block rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
           >
             Перейти до каталогу
           </Link>

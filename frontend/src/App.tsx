@@ -179,16 +179,16 @@ function App() {
       : sortProducts(categoryProducts, sortBy)
 
   return (
-    <div className="mx-auto flex max-w-7xl gap-8 p-6">
-      <aside className="w-64 shrink-0">
+    <div className="mx-auto flex max-w-7xl flex-col gap-8 p-4 sm:p-6 lg:flex-row lg:p-8">
+      <aside className="w-full shrink-0 lg:w-64">
         <nav className="flex flex-col gap-1">
           <button
             type="button"
             onClick={() => selectCategory(null)}
-            className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
+            className={`flex items-center justify-between rounded-md border-l-2 px-3 py-2 text-left text-sm transition ${
               !query && selectedCategoryId === null
-                ? 'bg-gray-100 font-semibold text-gray-900'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'border-brand bg-brand-light font-semibold text-brand'
+                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
             <span className="truncate">Усі товари</span>
@@ -222,7 +222,7 @@ function App() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortKey)}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-gray-500 focus:outline-none"
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-900 shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                 >
                   {SORT_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -344,7 +344,7 @@ function SearchResults({
       ) : search.isLoading ? null : results.length === 0 ? (
         <p className="text-gray-500">Нічого не знайдено.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {results.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

@@ -109,7 +109,7 @@ export function CartPage() {
             </div>
             <Link
               to="/checkout"
-              className="rounded-md bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700"
+              className="rounded-md bg-brand px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark"
             >
               Оформити замовлення
             </Link>

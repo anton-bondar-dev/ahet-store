@@ -14,14 +14,14 @@ export function Header() {
   const { count: wishlistCount } = useWishlist()
 
   return (
-    <header className="sticky top-0 z-[60] border-b border-gray-100 bg-white shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3">
+    <header className="sticky top-0 z-[60] border-t-[3px] border-brand border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
         {/* Logo / store name */}
         <Link
           to="/"
-          className="shrink-0 text-xl font-bold text-gray-900 transition hover:text-gray-600"
+          className="group shrink-0 text-2xl font-extrabold tracking-tight text-gray-900"
         >
-          Ahet Store
+          Ahet <span className="text-brand transition group-hover:text-brand-dark">Store</span>
         </Link>
 
         {/* Search with autocomplete + history */}
@@ -32,7 +32,7 @@ export function Header() {
           <button
             type="button"
             onClick={openDrawer}
-            className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
+            className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-brand-light hover:text-brand"
           >
             <svg
               className="h-5 w-5"
@@ -56,7 +56,7 @@ export function Header() {
         {user && !isStaff && (
           <Link
             to="/wishlist"
-            className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
+            className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-brand-light hover:text-brand"
           >
             <svg
               className="h-5 w-5"
@@ -88,7 +88,7 @@ export function Header() {
         {user ? (
           <Link
             to="/account"
-            className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
+            className="inline-flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-brand-light hover:text-brand"
           >
             <svg
               className="h-5 w-5"
@@ -108,7 +108,7 @@ export function Header() {
         ) : (
           <Link
             to="/login"
-            className="shrink-0 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-gray-900"
+            className="shrink-0 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-brand-light hover:text-brand"
           >
             Увійти
           </Link>

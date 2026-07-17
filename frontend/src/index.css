@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+/* ── Ahet brand theme ─────────────────────────────────────────────────────
+   A sleek tech-red used as a striking accent against clean white / light-gray
+   surfaces. Exposes `brand`, `brand-dark` (hover), and `brand-light` (tint)
+   as Tailwind color utilities: bg-brand, text-brand, hover:bg-brand-dark, … */
+@theme {
+  --color-brand: #e63946;
+  --color-brand-dark: #c1121f;
+  --color-brand-light: #fdecee;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  /* Brand-tinted text selection for a cohesive feel. */
+  ::selection {
+    background-color: var(--color-brand);
+    color: #fff;
+  }
+}
+
 @utility scrollbar-hide {
   scrollbar-width: none; /* Firefox */
   &::-webkit-scrollbar {

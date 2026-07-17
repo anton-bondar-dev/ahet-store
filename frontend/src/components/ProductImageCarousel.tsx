@@ -37,7 +37,7 @@ export function ProductImageCarousel({
   }
 
   return (
-    <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-50">
+    <div className="relative aspect-square overflow-hidden rounded-t-xl bg-gray-50">
       {count > 0 ? (
         <Link to={to} className="block h-full w-full">
           <img

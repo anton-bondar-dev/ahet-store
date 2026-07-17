@@ -83,7 +83,7 @@ export function OrderSuccessPage() {
 
         <Link
           to="/"
-          className="mt-6 inline-block rounded-md bg-gray-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700"
+          className="mt-6 inline-block rounded-md bg-brand px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark"
         >
           Продовжити покупки
         </Link>

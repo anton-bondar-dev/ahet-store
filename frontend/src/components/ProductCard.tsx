@@ -31,11 +31,11 @@ export function ProductCard({
     : 0
   const hoverEffect = noZoom
     ? 'hover:border-gray-300 hover:shadow-md'
-    : 'hover:z-50 hover:scale-105 hover:shadow-xl'
+    : 'hover:-translate-y-1 hover:border-gray-300 hover:shadow-xl'
 
   return (
     <div
-      className={`group relative z-10 flex h-full flex-col rounded-lg border border-gray-200 bg-white shadow-sm transition-all duration-300 ${hoverEffect} ${
+      className={`group relative z-10 flex h-full flex-col rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-300 ${hoverEffect} ${
         isUnavailable ? 'opacity-60' : ''
       }`}
     >
@@ -66,7 +66,7 @@ export function ProductCard({
           {product.category.name}
         </span>
         <Link to={`/product/${product.slug}`}>
-          <h2 className="line-clamp-2 text-sm font-semibold text-gray-900 hover:text-gray-600">
+          <h2 className="line-clamp-2 text-sm font-semibold text-gray-900 transition hover:text-brand">
             {product.title}
           </h2>
         </Link>
@@ -96,7 +96,7 @@ export function ProductCard({
               <span className="text-sm text-gray-400 line-through">
                 {formatPrice(product.price)}
               </span>
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-2xl font-extrabold tracking-tight text-brand">
                 {formatPrice(product.discount_price!)}
               </span>
               <span className="mt-0.5 text-xs font-semibold text-green-600">
@@ -104,7 +104,7 @@ export function ProductCard({
               </span>
             </div>
           ) : (
-            <span className="text-xl font-bold text-gray-900">
+            <span className="text-2xl font-extrabold tracking-tight text-gray-900">
               {formatPrice(product.price)}
             </span>
           )}
@@ -170,8 +170,8 @@ function BuyButton({
       type="button"
       onClick={handleClick}
       disabled={busy}
-      className={`mt-3 w-full rounded-md px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-70 ${
-        added ? 'bg-green-600' : 'bg-gray-900 hover:bg-gray-700'
+      className={`mt-3 w-full rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm transition disabled:opacity-70 ${
+        added ? 'bg-green-600' : 'bg-brand hover:bg-brand-dark'
       }`}
     >
       {added ? 'У кошику! ✓' : 'Купити'}
