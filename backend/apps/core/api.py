@@ -1,5 +1,6 @@
 from ninja import NinjaAPI, Schema
 
+from apps.analytics.api import router as analytics_router
 from apps.accounts.api import router as accounts_router
 from apps.accounts.profile_api import router as profile_router
 from apps.cart.api import router as cart_router
@@ -30,3 +31,4 @@ api.add_router("/orders", orders_router)
 api.add_router("/auth", accounts_router)
 api.add_router("/accounts", profile_router)
 api.add_router("/support", support_router)
+api.add_router("/analytics", analytics_router)
