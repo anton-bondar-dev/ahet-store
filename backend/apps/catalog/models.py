@@ -2,7 +2,36 @@ from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import ExpressionWrapper, F, FloatField
+from django.db.models.functions import Extract, Now, Power
 from django.utils import timezone
+
+# Trending weights: a purchase is worth far more than a view.
+TREND_W_VIEW = 1.0
+TREND_W_CART = 3.0
+TREND_W_PURCHASE = 10.0
+TREND_GRAVITY = 1.5  # older products decay faster
+
+
+class ProductQuerySet(models.QuerySet):
+    def with_trending_score(self):
+        """Annotate `trending_score` = (V + 3C + 10P) / (age_days + 1)^1.5,
+        computed in-DB so it can be ordered/filtered on."""
+        age_days = ExpressionWrapper(
+            Extract(Now() - F("created_at"), "epoch") / 86400.0,
+            output_field=FloatField(),
+        )
+        weighted = (
+            TREND_W_VIEW * F("views_count")
+            + TREND_W_CART * F("cart_adds_count")
+            + TREND_W_PURCHASE * F("purchases_count")
+        )
+        return self.annotate(
+            trending_score=ExpressionWrapper(
+                weighted / Power(age_days + 1.0, TREND_GRAVITY),
+                output_field=FloatField(),
+            )
+        )
 
 
 class Category(models.Model):
@@ -47,6 +76,13 @@ class Product(models.Model):
     disable_new_badge = models.BooleanField(default=False)
     # Admin override for the bonus points granted; falls back to 1% of price.
     custom_bonus = models.IntegerField(null=True, blank=True)
+
+    # Trending-engine interaction counters (atomic F() increments at each event).
+    views_count = models.PositiveIntegerField(default=0)
+    cart_adds_count = models.PositiveIntegerField(default=0)
+    purchases_count = models.PositiveIntegerField(default=0)
+
+    objects = ProductQuerySet.as_manager()
 
     class Meta:
         verbose_name = "Product"

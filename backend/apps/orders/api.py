@@ -93,10 +93,11 @@ def checkout(request, payload: CheckoutIn):
                 )
             )
             product.stock -= item.quantity
+            product.purchases_count += item.quantity  # trending engine
             total_price += unit_price * item.quantity
 
         OrderItem.objects.bulk_create(order_items)
-        Product.objects.bulk_update(locked.values(), ["stock"])
+        Product.objects.bulk_update(locked.values(), ["stock", "purchases_count"])
 
         # Money order: subtotal → coupon discount → bonus cap on the remainder.
         subtotal = total_price  # Σ effective_price × qty

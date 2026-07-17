@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import Optional
 
+from django.db.models import F
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.errors import HttpError
@@ -78,6 +79,9 @@ def add_to_cart(request, payload: AddToCartIn):
     item, created = CartItem.objects.get_or_create(cart=cart, product=product)
     item.quantity = (0 if created else item.quantity) + max(1, payload.quantity)
     item.save()
+
+    # Trending engine: count the cart addition (atomic).
+    Product.objects.filter(id=product.id).update(cart_adds_count=F("cart_adds_count") + 1)
 
     return serialize_cart(get_current_cart(request))
 

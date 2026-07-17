@@ -26,9 +26,13 @@ def list_categories(request):
 
 
 @router.get("/products", response=List[ProductOut], operation_id="list_products")
-def list_products(request, q: Optional[str] = None):
+def list_products(request, q: Optional[str] = None, sort: Optional[str] = None):
     products = Product.objects.select_related("category")
     if not q or not q.strip():
+        products = products.with_trending_score()
+        if sort == "popular":
+            # Trending engine: time-decayed popularity score.
+            return products.order_by("-trending_score", "title")
         return products.all()
 
     ql = q.strip().lower()
@@ -92,4 +96,7 @@ def get_suggestions(request, q: str = ""):
 # `/suggestions` resolve first and are not captured by the `{slug}` path parameter.
 @router.get("/{slug}", response=ProductOut, operation_id="get_product")
 def get_product(request, slug: str):
-    return get_object_or_404(Product.objects.select_related("category"), slug=slug)
+    product = get_object_or_404(Product.objects.select_related("category"), slug=slug)
+    # Count the view for the trending engine (atomic, doesn't touch `product`).
+    Product.objects.filter(id=product.id).update(views_count=F("views_count") + 1)
+    return product
