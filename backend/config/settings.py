@@ -107,6 +107,9 @@ NINJA_JWT = {
 # token the flow still works locally via the DEBUG-only dev-approve endpoint.
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourStoreBot')
+# Chat (Team Lead / support group) that receives real-time admin alerts
+# (helpdesk messages, low-stock warnings). Alerts no-op when unset.
+TELEGRAM_ADMIN_CHAT_ID = os.environ.get('TELEGRAM_ADMIN_CHAT_ID', '')
 # DEBUG-only escape hatch: skip TLS verification for Telegram calls when a local
 # TLS-inspecting proxy / missing CA bundle causes CERTIFICATE_VERIFY_FAILED.
 # Never affects production (gated on DEBUG in telegram.call).
