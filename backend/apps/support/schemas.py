@@ -11,6 +11,7 @@ from .models import SUPPORT_DISPLAY_NAME
 
 class ChatMessageIn(Schema):
     text: str
+    is_internal: bool = False  # staff-only note (ignored on the customer endpoint)
 
 
 class RatingIn(Schema):
@@ -62,6 +63,7 @@ class AdminChatMessageOut(Schema):
     sender_name: str
     from_staff: bool
     is_system: bool = False
+    is_internal: bool = False
     meta: dict = {}
     text: str
     created_at: datetime
@@ -101,6 +103,9 @@ class TicketPresenceOut(Schema):
 class AdminTicketOut(Schema):
     id: int
     user_username: str
+    support_id: Optional[str] = None      # customer's hidden support id (staff-only)
+    assigned_to: Optional[str] = None     # operator handling it
+    priority: str = "normal"
     status: str
     subject: str
     updated_at: datetime
@@ -111,15 +116,32 @@ class AdminTicketOut(Schema):
     def resolve_user_username(obj):
         return obj.user.username
 
+    @staticmethod
+    def resolve_support_id(obj):
+        profile = getattr(obj.user, "profile", None)
+        return profile.support_id if profile else None
+
+    @staticmethod
+    def resolve_assigned_to(obj):
+        u = obj.assigned_to
+        return (u.first_name or u.username) if u else None
+
 
 class AdminTicketDetailOut(Schema):
     id: int
     user_id: int
     user_username: str
     customer_name: str
+    customer_support_id: Optional[str] = None
     customer_blocked: bool = False
     status: str
+    priority: str = "normal"
     is_overdue: bool = False
+    assigned_to_id: Optional[int] = None
+    assigned_to_name: Optional[str] = None
+    customer_last_seen: Optional[datetime] = None
+    customer_device: str = ""
+    customer_online: bool = False
     messages: List[AdminChatMessageOut]
     tags: List[CustomerTagOut]
     viewers: List[TicketPresenceOut]  # other staff currently on this ticket
@@ -127,6 +149,43 @@ class AdminTicketDetailOut(Schema):
     @staticmethod
     def resolve_user_id(obj):
         return obj.user_id
+
+    @staticmethod
+    def resolve_customer_last_seen(obj):
+        profile = getattr(obj.user, "profile", None)
+        return profile.last_seen_at if profile else None
+
+    @staticmethod
+    def resolve_customer_device(obj):
+        from .services import parse_user_agent
+
+        profile = getattr(obj.user, "profile", None)
+        return parse_user_agent(profile.last_user_agent) if profile else ""
+
+    @staticmethod
+    def resolve_customer_online(obj):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        profile = getattr(obj.user, "profile", None)
+        if not profile or not profile.last_seen_at:
+            return False
+        return timezone.now() - profile.last_seen_at < timedelta(minutes=2)
+
+    @staticmethod
+    def resolve_customer_support_id(obj):
+        profile = getattr(obj.user, "profile", None)
+        return profile.support_id if profile else None
+
+    @staticmethod
+    def resolve_assigned_to_id(obj):
+        return obj.assigned_to_id
+
+    @staticmethod
+    def resolve_assigned_to_name(obj):
+        u = obj.assigned_to
+        return (u.first_name or u.username) if u else None
 
     @staticmethod
     def resolve_customer_blocked(obj):
@@ -302,11 +361,24 @@ class StaffDossierOut(Schema):
     username: str
     name: str
     role: str              # "owner" | "operator"
+    status: str = "online"  # operator availability (online | away)
     is_active: bool        # False = blocked operator
     resolved_tickets: int
     comments_resolved: int
     ratings_total: int
     positive_rate: Optional[int] = None
+
+
+class OperatorStatusIn(Schema):
+    status: str            # "online" | "away"
+
+
+class AssignTicketIn(Schema):
+    operator_id: Optional[int] = None  # None → assign to self ("Assign to me")
+
+
+class PriorityIn(Schema):
+    priority: str  # low | normal | high | urgent
 
 
 class BlockUserIn(Schema):

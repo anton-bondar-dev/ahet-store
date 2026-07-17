@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
-from ninja_jwt.authentication import JWTAuth
+from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
 from ninja_jwt.tokens import AccessToken
 
 from apps.accounts.models import Profile
@@ -40,7 +40,10 @@ from .schemas import (
     ActionResultOut,
     ApprovalOut,
     AssignTagIn,
+    AssignTicketIn,
     AuditLogOut,
+    OperatorStatusIn,
+    PriorityIn,
     BlockUserIn,
     CancelBonusIn,
     ChatActionIn,
@@ -123,7 +126,10 @@ def get_my_chat(request):
     return {
         "ticket_id": ticket.id,
         "status": ticket.status,
-        "messages": list(ticket.messages.select_related("sender").all()),
+        # Internal staff notes are never exposed to the customer.
+        "messages": list(
+            ticket.messages.exclude(is_internal=True).select_related("sender").all()
+        ),
         "can_rate": can_rate,
     }
 
@@ -206,14 +212,16 @@ def list_tickets(request, archived: bool = False):
     _require_staff(request)
     status = SupportTicket.STATUS_CLOSED if archived else SupportTicket.STATUS_OPEN
     tickets = list(
-        SupportTicket.objects.filter(status=status).select_related("user").annotate(
+        SupportTicket.objects.filter(status=status)
+        .select_related("user", "user__profile", "assigned_to").annotate(
             unread_count=Count(
                 "messages", filter=Q(messages__from_staff=False, messages__read_by_staff=False)
             )
         ).order_by("-updated_at")
     )
-    # Overdue tickets float to the top (stable sort keeps recency within groups).
-    tickets.sort(key=lambda t: not t.is_overdue)
+    # Sort by priority (urgent → low), then overdue-first, then recency (the
+    # queryset's -updated_at order is preserved by the stable sort).
+    tickets.sort(key=lambda t: (SupportTicket.PRIORITY_RANK.get(t.priority, 2), not t.is_overdue))
     return tickets
 
 
@@ -245,11 +253,16 @@ def reply_ticket(request, ticket_id: int, payload: ChatMessageIn):
         raise HttpError(400, "Повідомлення порожнє")
     ticket = get_object_or_404(SupportTicket, id=ticket_id)
     ChatMessage.objects.create(
-        ticket=ticket, sender=staff, from_staff=True, text=payload.text
+        ticket=ticket, sender=staff, from_staff=True, text=payload.text,
+        is_internal=payload.is_internal,
     )
-    # A real staff reply answers the SLA clock.
-    ticket.last_staff_message_at = timezone.now()
-    ticket.save(update_fields=["updated_at", "last_staff_message_at"])
+    # An internal note isn't a customer-facing reply, so it doesn't answer the
+    # SLA clock; a real reply does.
+    if payload.is_internal:
+        ticket.save(update_fields=["updated_at"])
+    else:
+        ticket.last_staff_message_at = timezone.now()
+        ticket.save(update_fields=["updated_at", "last_staff_message_at"])
     return _heartbeat_and_viewers(ticket, staff)
 
 
@@ -662,6 +675,68 @@ def list_audit_log(request):
     )
 
 
+# --- Phase 3: operator status + ticket assignment ----------------------------
+@router.post(
+    "/admin/me/status", response=OkOut, auth=JWTAuth(), operation_id="set_operator_status"
+)
+def set_operator_status(request, payload: OperatorStatusIn):
+    staff = _require_staff(request)
+    status = (
+        payload.status
+        if payload.status in (Profile.STATUS_ONLINE, Profile.STATUS_AWAY)
+        else Profile.STATUS_ONLINE
+    )
+    profile, _ = Profile.objects.get_or_create(user=staff)
+    profile.operator_status = status
+    profile.save(update_fields=["operator_status"])
+    return {"ok": True}
+
+
+@router.post(
+    "/admin/tickets/{ticket_id}/assign",
+    response=AdminTicketDetailOut,
+    auth=JWTAuth(),
+    operation_id="assign_ticket",
+)
+def assign_ticket(request, ticket_id: int, payload: AssignTicketIn):
+    staff = _require_staff(request)
+    ticket = get_object_or_404(SupportTicket.objects.select_related("user"), id=ticket_id)
+
+    if payload.operator_id is None:
+        target = staff  # "Assign to me"
+    else:
+        # Only the Team Lead can assign a ticket to someone other than themselves.
+        if not staff.is_superuser and payload.operator_id != staff.id:
+            raise HttpError(403, "Лише тімлід може призначати іншим операторам")
+        target = get_object_or_404(User, id=payload.operator_id)
+        if not is_staff_user(target):
+            raise HttpError(400, "Призначати можна лише оператора")
+
+    ticket.assigned_to = target
+    ticket.save(update_fields=["assigned_to", "updated_at"])
+    log_admin_action(
+        staff, "assign_ticket", target_user=ticket.user, ticket=ticket,
+        assigned_to=target.id,
+    )
+    return _heartbeat_and_viewers(ticket, staff)
+
+
+@router.post(
+    "/admin/tickets/{ticket_id}/priority",
+    response=AdminTicketDetailOut,
+    auth=JWTAuth(),
+    operation_id="set_priority",
+)
+def set_priority(request, ticket_id: int, payload: PriorityIn):
+    staff = _require_staff(request)
+    if payload.priority not in dict(SupportTicket.PRIORITY_CHOICES):
+        raise HttpError(400, "Невідомий пріоритет")
+    ticket = get_object_or_404(SupportTicket.objects.select_related("user"), id=ticket_id)
+    ticket.priority = payload.priority
+    ticket.save(update_fields=["priority", "updated_at"])
+    return _heartbeat_and_viewers(ticket, staff)
+
+
 # --- Cancel a bonus grant (staff can reverse their own gifts) ----------------
 @router.post(
     "/admin/tickets/{ticket_id}/cancel-bonus",
@@ -704,13 +779,17 @@ def cancel_bonus(request, ticket_id: int, payload: CancelBonusIn):
 def list_staff(request):
     _require_owner(request)
     rows = []
-    for u in User.objects.filter(Q(is_staff=True) | Q(is_superuser=True)).order_by("id"):
+    for u in User.objects.filter(
+        Q(is_staff=True) | Q(is_superuser=True)
+    ).select_related("profile").order_by("id"):
         m = _staff_metrics(u)
+        profile = getattr(u, "profile", None)
         rows.append({
             "id": u.id,
             "username": u.username,
             "name": u.first_name or u.username,
             "role": "owner" if u.is_superuser else "operator",
+            "status": profile.operator_status if profile else Profile.STATUS_ONLINE,
             "is_active": u.is_active,
             **m,
         })
