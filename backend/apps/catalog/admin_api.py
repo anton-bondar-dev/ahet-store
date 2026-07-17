@@ -1,4 +1,3 @@
-import html
 from decimal import Decimal
 from typing import List, Optional
 
@@ -7,14 +6,10 @@ from ninja import Router, Schema
 from ninja.errors import HttpError
 
 from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
-from apps.core.services.telegram import send_admin_alert
 
 from .models import Product
 
 router = Router(tags=["catalog-admin"])
-
-# A stock quick-edit landing below this triggers a low-stock Telegram alert.
-LOW_STOCK_ALERT_THRESHOLD = 5
 
 
 def _require_staff(request):
@@ -83,13 +78,4 @@ def staff_update_product(request, product_id: int, payload: ProductEditIn):
         fields.append("stock")
     if fields:
         product.save(update_fields=fields)
-
-    # Low-stock alert: fire when this edit set the stock below the threshold.
-    if payload.stock is not None and product.stock < LOW_STOCK_ALERT_THRESHOLD:
-        send_admin_alert(
-            "🚨 <b>Закінчується товар!</b>\n"
-            f"Товар: {html.escape(product.title, quote=False)}\n"
-            f"Залишок: <b>{product.stock}</b> шт."
-        )
-
     return Product.objects.with_trending_score().get(id=product.id)

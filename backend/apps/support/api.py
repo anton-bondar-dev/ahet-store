@@ -1,4 +1,3 @@
-import html
 import secrets
 from datetime import timedelta
 from typing import List
@@ -14,7 +13,6 @@ from ninja_jwt.tokens import AccessToken
 
 from apps.accounts.models import Profile
 from apps.core.permissions import forbid_blocked, forbid_staff, is_staff_user
-from apps.core.services.telegram import send_admin_alert
 from apps.coupons.models import Coupon
 from apps.orders.models import Order
 from apps.reviews.models import Review
@@ -240,17 +238,6 @@ def send_my_message(request, payload: ChatMessageIn):
     # SLA clock: the newest unanswered customer message starts the timer.
     ticket.last_user_message_at = timezone.now()
     ticket.save(update_fields=["updated_at", "last_user_message_at"])
-
-    # Notify support staff on Telegram (customer messages only — this endpoint
-    # already forbids staff). Non-blocking + best-effort.
-    customer = request.auth
-    who = customer.first_name or customer.email or customer.username
-    snippet = text if len(text) <= 200 else text[:200] + "…"
-    send_admin_alert(
-        "💬 <b>Нове повідомлення в чаті!</b>\n"
-        f"Від: {html.escape(who, quote=False)}\n"
-        f"Текст: {html.escape(snippet, quote=False)}"
-    )
     return msg
 
 

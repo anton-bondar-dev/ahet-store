@@ -3,7 +3,6 @@ from ninja import NinjaAPI, Schema
 from apps.analytics.api import router as analytics_router
 from apps.accounts.api import router as accounts_router
 from apps.accounts.profile_api import router as profile_router
-from apps.accounts.telegram_api import router as telegram_router
 from apps.cart.api import router as cart_router
 from apps.catalog.admin_api import router as catalog_admin_router
 from apps.catalog.api import router as catalog_router
@@ -35,6 +34,5 @@ api.add_router("/auth", accounts_router)
 api.add_router("/accounts", profile_router)
 api.add_router("/support", support_router)
 api.add_router("/analytics", analytics_router)
-api.add_router("/telegram", telegram_router)
 api.add_router("/wishlist", wishlist_router)
 api.add_router("/staff/catalog", catalog_admin_router)

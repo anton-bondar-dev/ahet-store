@@ -107,16 +107,6 @@ NINJA_JWT = {
 # token the flow still works locally via the DEBUG-only dev-approve endpoint.
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourStoreBot')
-# Chat id(s) that receive real-time admin alerts (helpdesk messages, low-stock)
-# and drive the interactive bot menu / admin commands. A single id or several
-# comma-separated (per-staff chats, or a group id). Alerts / menu no-op when unset.
-TELEGRAM_ADMIN_CHAT_ID = os.environ.get('TELEGRAM_ADMIN_CHAT_ID', '')
-# Optional shared secret validated on the /api/telegram/webhook endpoint.
-TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET', '')
-
-# Public frontend origin — used to build links back to the workspace in bot
-# replies and (optionally) the webhook base URL.
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 # DEBUG-only escape hatch: skip TLS verification for Telegram calls when a local
 # TLS-inspecting proxy / missing CA bundle causes CERTIFICATE_VERIFY_FAILED.
 # Never affects production (gated on DEBUG in telegram.call).

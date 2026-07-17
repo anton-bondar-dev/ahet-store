@@ -87,11 +87,12 @@ class Command(BaseCommand):
         if cmd0 == "/start" and len(parts) > 1:
             self._handle_start(message)
             return
-        # /unlink (anyone) + admin menu / slash commands (admin chats only).
-        if telegram_bot.route(chat_id, text):
-            self.log(f"handled {text!r} from chat {chat_id}")
+        # Let users detach their account.
+        if cmd0 == "/unlink":
+            self.log(f"/unlink from chat {chat_id}")
+            telegram_bot.handle_unlink(chat_id)
             return
-        # Plain /start from a non-admin → the account-linking hint.
+        # Plain /start with no token → the account-linking hint.
         if cmd0 == "/start":
             self._handle_start(message)
             return
