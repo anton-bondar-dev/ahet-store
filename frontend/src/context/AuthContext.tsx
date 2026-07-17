@@ -8,6 +8,10 @@ import {
 } from '../api/generated/auth/auth'
 import { getGetCartQueryKey } from '../api/generated/cart/cart'
 import { trackViewed } from '../api/generated/products/products'
+import {
+  getListWishlistIdsQueryKey,
+  getListWishlistQueryKey,
+} from '../api/generated/wishlist/wishlist'
 import type { AuthResult, UserOut } from '../api/generated/onlineStoreAPI.schemas'
 import {
   clearAuth,
@@ -33,8 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserOut | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const invalidateCart = useCallback(() => {
+  // Per-user server data (cart + wishlist) must refetch whenever the identity
+  // changes, so a new account never shows the previous user's cached lists.
+  const invalidateUserData = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: getGetCartQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getListWishlistIdsQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getListWishlistQueryKey() })
   }, [queryClient])
 
   // Store tokens + user, refresh the cart (it may have just been merged), and
@@ -43,17 +51,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (result: AuthResult) => {
       setTokens(result.access ?? null, result.refresh ?? null)
       setUser(result.user ?? null)
-      invalidateCart()
+      invalidateUserData()
       if (result.status === 'authed') syncLocalViewed()
     },
-    [invalidateCart],
+    [invalidateUserData],
   )
 
   const logout = useCallback(() => {
     clearAuth()
     setUser(null)
-    invalidateCart()
-  }, [invalidateCart])
+    invalidateUserData()
+  }, [invalidateUserData])
 
   // A failed silent refresh (from the axios interceptor) resets React state.
   useEffect(() => {

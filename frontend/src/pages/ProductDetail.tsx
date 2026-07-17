@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useGetProduct } from '../api/generated/catalog/catalog'
 import { productImageUrl } from '../api/http'
 import { ReviewsSection } from '../components/reviews/ReviewsSection'
+import { WishlistButton } from '../components/WishlistButton'
 import { useCart } from '../hooks/useCart'
 import { useIsStaff } from '../hooks/useIsStaff'
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
@@ -104,7 +105,12 @@ export function ProductDetail() {
             {inStock ? 'В наявності' : 'Немає в наявності'}
           </span>
 
-          {!isStaff && <AddToCartButton productId={product.id} disabled={!inStock} />}
+          {!isStaff && (
+            <div className="flex items-center gap-3">
+              <AddToCartButton productId={product.id} disabled={!inStock} />
+              <WishlistButton productId={product.id} size="lg" />
+            </div>
+          )}
 
           {product.description && (
             <div className="border-t border-gray-100 pt-4">

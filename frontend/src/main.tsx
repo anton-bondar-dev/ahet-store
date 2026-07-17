@@ -8,6 +8,7 @@ import { AppShell } from './components/AppShell.tsx'
 import { CartDrawer } from './components/CartDrawer.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import { CartUIProvider } from './context/CartUIContext.tsx'
+import { ToastProvider } from './context/ToastContext.tsx'
 
 const queryClient = new QueryClient()
 
@@ -16,10 +17,12 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
-          <CartUIProvider>
-            <AppShell />
-            <CartDrawer />
-          </CartUIProvider>
+          <ToastProvider>
+            <CartUIProvider>
+              <AppShell />
+              <CartDrawer />
+            </CartUIProvider>
+          </ToastProvider>
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>

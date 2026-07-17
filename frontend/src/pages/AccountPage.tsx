@@ -91,7 +91,15 @@ export function AccountPage() {
                 {tab.label}
               </button>
             ))}
-            {/* Customers reach their own chat here; staff use the Helpdesk. */}
+            {/* Customers reach their wishlist and their own chat here. */}
+            {!user.is_staff && (
+              <Link
+                to="/wishlist"
+                className="whitespace-nowrap rounded-md px-3 py-2 text-left text-sm text-gray-600 transition hover:bg-gray-50 hover:text-gray-900 md:mt-2 md:border-t md:border-gray-100 md:pt-3"
+              >
+                Моє обране
+              </Link>
+            )}
             {!user.is_staff && (
               <Link
                 to="/me/support"

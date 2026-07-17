@@ -10,6 +10,7 @@ from apps.catalog.viewed_api import router as viewed_router
 from apps.orders.api import router as orders_router
 from apps.reviews.api import router as reviews_router
 from apps.support.api import router as support_router
+from apps.wishlist.api import router as wishlist_router
 
 api = NinjaAPI(title="Online Store API", version="1.0.0")
 
@@ -33,4 +34,5 @@ api.add_router("/auth", accounts_router)
 api.add_router("/accounts", profile_router)
 api.add_router("/support", support_router)
 api.add_router("/analytics", analytics_router)
+api.add_router("/wishlist", wishlist_router)
 api.add_router("/staff/catalog", catalog_admin_router)

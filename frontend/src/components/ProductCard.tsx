@@ -5,6 +5,7 @@ import { productImageUrl } from '../api/http'
 import { useCart } from '../hooks/useCart'
 import { useIsStaff } from '../hooks/useIsStaff'
 import { formatPrice, reviewsPlural } from '../lib/format'
+import { WishlistButton } from './WishlistButton'
 
 export function ProductCard({
   product,
@@ -32,6 +33,14 @@ export function ProductCard({
         isUnavailable ? 'opacity-60' : ''
       }`}
     >
+      {/* Wishlist heart — overlaid top-right, kept outside the image <Link> so
+          it never nests a button inside an anchor. */}
+      <WishlistButton
+        productId={product.id}
+        size="sm"
+        className="absolute right-2 top-2 z-20"
+      />
+
       {/* Image + badges (clicking opens the product page) */}
       <Link
         to={`/product/${product.slug}`}

@@ -11,6 +11,7 @@ import { OrderSuccessPage } from '../pages/OrderSuccessPage'
 import { ProductDetail } from '../pages/ProductDetail'
 import { RegisterPage } from '../pages/RegisterPage'
 import { UserSupportPage } from '../pages/UserSupportPage'
+import { WishlistPage } from '../pages/WishlistPage'
 import { Header } from './Header'
 import { ImpersonationBanner } from './ImpersonationBanner'
 import { SupportChatWidget } from './SupportChatWidget'
@@ -42,6 +43,7 @@ export function AppShell() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/me/support" element={<UserSupportPage />} />
         <Route path="/support/admin" element={<AdminSupportPage />} />
       </Routes>

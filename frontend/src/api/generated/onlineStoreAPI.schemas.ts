@@ -513,6 +513,10 @@ export interface OperatorAnalyticsOut {
   trending_products: TrendingProductOut[];
 }
 
+export interface ToggleOut {
+  is_favorite: boolean;
+}
+
 export interface StaffProductOut {
   id: number;
   title: string;
