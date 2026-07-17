@@ -5,7 +5,7 @@ from django.db import models, transaction
 from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.errors import HttpError
-from ninja_jwt.authentication import JWTAuth
+from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
 
 from apps.accounts.models import Profile
 from apps.cart.services import (

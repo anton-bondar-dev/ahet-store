@@ -149,6 +149,13 @@ LOGGING = {
 
 ROOT_URLCONF = 'config.urls'
 
+# Email-based login (custom backend), with the default username backend kept as
+# a fallback so the Django admin still accepts a username too.
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.auth_backend.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

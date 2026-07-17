@@ -2,7 +2,7 @@ from typing import List
 
 from django.shortcuts import get_object_or_404
 from ninja import Router, Schema
-from ninja_jwt.authentication import JWTAuth
+from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
 
 from .models import Product, RecentlyViewed
 from .schemas import ProductOut

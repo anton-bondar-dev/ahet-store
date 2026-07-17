@@ -1,5 +1,6 @@
 import logging
 import secrets
+import uuid
 from datetime import timedelta
 
 from django.conf import settings
@@ -9,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
-from ninja_jwt.authentication import JWTAuth
+from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
 from ninja_jwt.tokens import RefreshToken
 
 from apps.cart.services import get_session_id, merge_anonymous_cart
@@ -27,6 +28,7 @@ from .schemas import (
     RegisterIn,
     Set2faMethodIn,
     TelegramLinkOut,
+    TokenPair,
     UserOut,
     VerifyOtpIn,
 )
@@ -43,8 +45,15 @@ LINK_TTL = timedelta(minutes=30)
 
 
 def _issue_tokens(user: User):
+    # Embed the user's security stamp so tokens can be mass-invalidated by
+    # rotating it ("log out everywhere").
+    profile, _ = Profile.objects.get_or_create(user=user)
+    stamp = str(profile.security_stamp)
     refresh = RefreshToken.for_user(user)
-    return str(refresh.access_token), str(refresh)
+    refresh["stamp"] = stamp
+    access = refresh.access_token
+    access["stamp"] = stamp
+    return str(access), str(refresh)
 
 
 def _authed(request, user: User, session_id, notify: bool = True):
@@ -61,20 +70,27 @@ def _authed(request, user: User, session_id, notify: bool = True):
 
 @router.post("/register", response=AuthResult, operation_id="register")
 def register(request, payload: RegisterIn):
-    if User.objects.filter(username=payload.username).exists():
-        raise HttpError(400, "Користувач з таким іменем вже існує")
+    email = payload.email.strip().lower()
+    name = payload.name.strip()
+    if not email:
+        raise HttpError(400, "Вкажіть email")
+    if User.objects.filter(email__iexact=email).exists():
+        raise HttpError(400, "Обліковий запис із таким email вже існує")
+    # The username is required by Django but hidden from users — generate a
+    # random, collision-free value they never see.
+    username = f"u-{uuid.uuid4().hex[:20]}"
     user = User.objects.create_user(
-        username=payload.username, email=payload.email, password=payload.password
+        username=username, email=email, password=payload.password, first_name=name
     )
-    Profile.objects.create(user=user)
+    Profile.objects.create(user=user, first_name=name)
     return _authed(request, user, get_session_id(request), notify=False)
 
 
 @router.post("/login", response=AuthResult, operation_id="login")
 def login(request, payload: LoginIn):
-    user = authenticate(request, username=payload.username, password=payload.password)
+    user = authenticate(request, username=payload.email.strip(), password=payload.password)
     if user is None:
-        raise HttpError(401, "Невірний логін або пароль")
+        raise HttpError(401, "Невірний email або пароль")
 
     profile = getattr(user, "profile", None)
     method = profile.preferred_2fa_method if profile else Profile.METHOD_NONE
@@ -232,9 +248,29 @@ def set_2fa_method(request, payload: Set2faMethodIn):
 def refresh_token(request, payload: RefreshIn):
     try:
         refresh = RefreshToken(payload.refresh)
-        return {"access": str(refresh.access_token)}
     except Exception:
         raise HttpError(401, "Недійсний токен оновлення")
+    # Reject refresh tokens issued before a "log out everywhere".
+    profile = Profile.objects.filter(user_id=refresh.get("user_id")).first()
+    if profile is None or refresh.get("stamp") != str(profile.security_stamp):
+        raise HttpError(401, "Сесію завершено")
+    access = refresh.access_token
+    access["stamp"] = str(profile.security_stamp)
+    return {"access": str(access)}
+
+
+@router.post(
+    "/logout-others", response=TokenPair, auth=JWTAuth(), operation_id="logout_other_sessions"
+)
+def logout_other_sessions(request):
+    # Rotate the security stamp → every previously issued token (on all devices)
+    # stops validating. Return fresh tokens so THIS session stays logged in.
+    user = request.auth
+    profile, _ = Profile.objects.get_or_create(user=user)
+    profile.security_stamp = uuid.uuid4()
+    profile.save(update_fields=["security_stamp"])
+    access, refresh = _issue_tokens(user)
+    return {"access": access, "refresh": refresh}
 
 
 @router.get("/me", response=UserOut, auth=JWTAuth(), operation_id="me")

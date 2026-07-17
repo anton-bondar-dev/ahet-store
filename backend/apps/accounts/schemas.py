@@ -4,13 +4,13 @@ from ninja import Schema
 
 
 class RegisterIn(Schema):
-    username: str
+    name: str      # display name → first_name (username is generated internally)
     email: str
     password: str
 
 
 class LoginIn(Schema):
-    username: str
+    email: str
     password: str
 
 
@@ -29,6 +29,12 @@ class UserOut(Schema):
     bonus_balance: int = 0
     is_staff: bool = False
     is_superuser: bool = False  # the Owner role — gates the audit log view
+    operator_status: str = "online"  # operator availability toggle
+
+    @staticmethod
+    def resolve_operator_status(obj):
+        profile = getattr(obj, "profile", None)
+        return profile.operator_status if profile else "online"
 
     @staticmethod
     def resolve_is_staff(obj):
@@ -82,9 +88,9 @@ class GoogleAuthIn(Schema):
 
 
 class ProfileIn(Schema):
-    username: str = ""
     first_name: str = ""
     last_name: str = ""
+    email: str = ""  # login identifier; editable with a uniqueness check
     phone_number: str = ""
     city: str = ""
     delivery_address: str = ""

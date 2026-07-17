@@ -3,7 +3,7 @@ from typing import List
 from django.contrib.auth.models import User
 from ninja import Router
 from ninja.errors import HttpError
-from ninja_jwt.authentication import JWTAuth
+from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
 
 from apps.core.permissions import is_staff_user
 from apps.reviews.models import Review
@@ -38,17 +38,16 @@ def get_profile(request):
 def update_profile(request, payload: ProfileIn):
     user = request.auth
 
-    # Username (login) is editable, with a uniqueness check — but the support
-    # account's username is locked (it's the key `create_support_admin` looks up,
-    # so an accidental change would orphan the help-desk identity).
-    new_username = payload.username.strip()
-    if new_username and new_username != user.username:
+    # Email is the login identifier now — editable, with a uniqueness check.
+    # (Staff email is locked to protect the fixed help-desk identity.)
+    new_email = payload.email.strip().lower()
+    if new_email and new_email != (user.email or "").lower():
         if is_staff_user(user):
-            raise HttpError(403, "Ім'я користувача службового акаунта змінити не можна")
-        if User.objects.filter(username__iexact=new_username).exclude(pk=user.pk).exists():
-            raise HttpError(400, "Це ім'я користувача вже зайняте")
-        user.username = new_username
-        user.save(update_fields=["username"])
+            raise HttpError(403, "Email службового акаунта змінити не можна")
+        if User.objects.filter(email__iexact=new_email).exclude(pk=user.pk).exists():
+            raise HttpError(400, "Цей email вже використовується")
+        user.email = new_email
+        user.save(update_fields=["email"])
 
     profile, _ = Profile.objects.get_or_create(user=user)
     profile.first_name = payload.first_name
