@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from apps.accounts import telegram_bot
 from apps.accounts.models import LoginChallenge, Profile, TelegramLinkToken
 from apps.accounts.telegram import call
 
@@ -68,15 +69,31 @@ class Command(BaseCommand):
                     self.stderr.write(f"[telegram-bot] error handling update: {e}")
 
     def _handle(self, update):
-        message = update.get("message")
-        if message and message.get("text", "").startswith("/start"):
-            self._handle_start(message)
-            return
         callback = update.get("callback_query")
         if callback:
             self._handle_callback(callback)
-        else:
+            return
+        message = update.get("message")
+        if not message:
             self.log(f"Ignored update keys: {list(update.keys())}")
+            return
+        text = (message.get("text") or "").strip()
+        chat_id = str(message.get("chat", {}).get("id", ""))
+        parts = text.split(maxsplit=1)
+        # 2FA account linking: /start <token>.
+        if parts and parts[0] == "/start" and len(parts) > 1:
+            self._handle_start(message)
+            return
+        # Admin navigation menu — only from the configured admin chat.
+        if telegram_bot.is_admin_chat(chat_id):
+            self.log(f"admin menu: {text!r} from chat {chat_id}")
+            telegram_bot.handle_admin_message(chat_id, text)
+            return
+        # Plain /start from a non-admin → the account-linking hint.
+        if parts and parts[0] == "/start":
+            self._handle_start(message)
+            return
+        self.log(f"Ignored message text={text!r} from chat {chat_id}")
 
     def _handle_start(self, message):
         chat = message["chat"]
