@@ -33,9 +33,13 @@ import type {
 import type {
   AccessOut,
   AuthResult,
+  ChangePasswordIn,
   GoogleAuthIn,
   LinkStatusOut,
   LoginIn,
+  OkOut,
+  PasswordResetConfirmIn,
+  PasswordResetRequestIn,
   RefreshIn,
   RegisterIn,
   Set2faMethodIn,
@@ -642,6 +646,189 @@ export const useLogoutOtherSessions = <TError = AxiosError<unknown>,
         TContext
       > => {
       return useMutation(getLogoutOtherSessionsMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Change Password
+ */
+export const changePassword = (
+    changePasswordIn: ChangePasswordIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<TokenPair>> => {
+
+
+    return axios.default.post(
+      `/api/auth/password/change`,
+      changePasswordIn,options
+    );
+  }
+
+
+
+
+export const getChangePasswordMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordIn}, TContext> => {
+
+const mutationKey = ['changePassword'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changePassword>>, {data: ChangePasswordIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changePassword(data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changePassword>>>
+    export type ChangePasswordMutationBody = ChangePasswordIn
+    export type ChangePasswordMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Change Password
+ */
+export const useChangePassword = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{data: ChangePasswordIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changePassword>>,
+        TError,
+        {data: ChangePasswordIn},
+        TContext
+      > => {
+      return useMutation(getChangePasswordMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Request Password Reset
+ */
+export const requestPasswordReset = (
+    passwordResetRequestIn: PasswordResetRequestIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<OkOut>> => {
+
+
+    return axios.default.post(
+      `/api/auth/password/reset/request`,
+      passwordResetRequestIn,options
+    );
+  }
+
+
+
+
+export const getRequestPasswordResetMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequestIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequestIn}, TContext> => {
+
+const mutationKey = ['requestPasswordReset'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPasswordReset>>, {data: PasswordResetRequestIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestPasswordReset(data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof requestPasswordReset>>>
+    export type RequestPasswordResetMutationBody = PasswordResetRequestIn
+    export type RequestPasswordResetMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Request Password Reset
+ */
+export const useRequestPasswordReset = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPasswordReset>>, TError,{data: PasswordResetRequestIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestPasswordReset>>,
+        TError,
+        {data: PasswordResetRequestIn},
+        TContext
+      > => {
+      return useMutation(getRequestPasswordResetMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Confirm Password Reset
+ */
+export const confirmPasswordReset = (
+    passwordResetConfirmIn: PasswordResetConfirmIn, options?: AxiosRequestConfig
+ ): Promise<AxiosResponse<TokenPair>> => {
+
+
+    return axios.default.post(
+      `/api/auth/password/reset/confirm`,
+      passwordResetConfirmIn,options
+    );
+  }
+
+
+
+
+export const getConfirmPasswordResetMutationOptions = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmIn}, TContext>, axios?: AxiosRequestConfig}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmIn}, TContext> => {
+
+const mutationKey = ['confirmPasswordReset'];
+const {mutation: mutationOptions, axios: axiosOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, axios: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmPasswordReset>>, {data: PasswordResetConfirmIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  confirmPasswordReset(data,axiosOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmPasswordResetMutationResult = NonNullable<Awaited<ReturnType<typeof confirmPasswordReset>>>
+    export type ConfirmPasswordResetMutationBody = PasswordResetConfirmIn
+    export type ConfirmPasswordResetMutationError = AxiosError<unknown>
+
+    /**
+ * @summary Confirm Password Reset
+ */
+export const useConfirmPasswordReset = <TError = AxiosError<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmPasswordReset>>, TError,{data: PasswordResetConfirmIn}, TContext>, axios?: AxiosRequestConfig}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof confirmPasswordReset>>,
+        TError,
+        {data: PasswordResetConfirmIn},
+        TContext
+      > => {
+      return useMutation(getConfirmPasswordResetMutationOptions(options), queryClient);
     }
     /**
  * @summary Me

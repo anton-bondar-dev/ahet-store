@@ -66,6 +66,29 @@ def send_login_alert_async(email: str, username: str) -> None:
     ).start()
 
 
+def send_password_reset(email: str, name: str, reset_url: str) -> None:
+    """Email a password-reset link. With the console backend (dev) the link
+    prints to the runserver terminal."""
+    subject = "Відновлення пароля Ahet Store"
+    body = (
+        f"Вітаємо, {name}!\n\n"
+        f"Ми отримали запит на відновлення пароля для вашого акаунта Ahet Store.\n"
+        f"Щоб встановити новий пароль, перейдіть за посиланням:\n\n{reset_url}\n\n"
+        f"Посилання дійсне обмежений час і одноразове.\n"
+        f"Якщо ви не робили цей запит — просто проігноруйте цей лист, "
+        f"ваш пароль залишиться незмінним."
+    )
+    logger.info("PASSWORD RESET LINK for %s: %s", email, reset_url)
+    _deliver(subject, body, email)
+
+
+def send_password_reset_async(email: str, name: str, reset_url: str) -> None:
+    """Fire-and-forget the reset email so it never delays the response."""
+    threading.Thread(
+        target=send_password_reset, args=(email, name, reset_url), daemon=True
+    ).start()
+
+
 def send_email_otp(user, code: str) -> None:
     """Email the 6-digit login OTP. With the console backend (dev) the message
     prints to the runserver terminal."""

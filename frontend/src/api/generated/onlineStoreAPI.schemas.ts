@@ -211,6 +211,25 @@ export interface TokenPair {
   refresh: string;
 }
 
+export interface ChangePasswordIn {
+  current_password: string;
+  new_password: string;
+}
+
+export interface OkOut {
+  ok: boolean;
+}
+
+export interface PasswordResetRequestIn {
+  email: string;
+}
+
+export interface PasswordResetConfirmIn {
+  uid: string;
+  token: string;
+  new_password: string;
+}
+
 export interface TelegramLinkOut {
   url: string;
   token: string;
@@ -269,10 +288,6 @@ export interface UserChatOut {
 export interface ChatMessageIn {
   text: string;
   is_internal?: boolean;
-}
-
-export interface OkOut {
-  ok: boolean;
 }
 
 export interface RatingIn {

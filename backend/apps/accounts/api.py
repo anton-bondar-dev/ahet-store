@@ -6,8 +6,13 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from ninja import Router
 from ninja.errors import HttpError
 from apps.accounts.jwt_auth import StampedJWTAuth as JWTAuth
@@ -15,15 +20,23 @@ from ninja_jwt.tokens import RefreshToken
 
 from apps.cart.services import get_session_id, merge_anonymous_cart
 
-from .email import send_email_otp, send_login_alert_async
+from .email import (
+    send_email_otp,
+    send_login_alert_async,
+    send_password_reset_async,
+)
 from .google import get_or_create_google_user, verify_google_token
 from .models import LoginChallenge, Profile, TelegramLinkToken
 from .schemas import (
     AccessOut,
     AuthResult,
+    ChangePasswordIn,
     GoogleAuthIn,
     LinkStatusOut,
     LoginIn,
+    OkOut,
+    PasswordResetConfirmIn,
+    PasswordResetRequestIn,
     RefreshIn,
     RegisterIn,
     Set2faMethodIn,
@@ -66,6 +79,22 @@ def _authed(request, user: User, session_id, notify: bool = True):
     if notify:
         send_login_alert_async(user.email, user.username)
     return {"status": "authed", "access": access, "refresh": refresh, "user": user}
+
+
+def _set_new_password(user: User, new_password: str) -> dict:
+    """Validate + set a new password, rotate the security stamp (invalidates every
+    other session), and issue fresh tokens so the caller stays / becomes logged in."""
+    try:
+        validate_password(new_password, user)
+    except DjangoValidationError as exc:
+        raise HttpError(400, " ".join(exc.messages))
+    user.set_password(new_password)
+    user.save(update_fields=["password"])
+    profile, _ = Profile.objects.get_or_create(user=user)
+    profile.security_stamp = uuid.uuid4()
+    profile.save(update_fields=["security_stamp"])
+    access, refresh = _issue_tokens(user)
+    return {"access": access, "refresh": refresh}
 
 
 @router.post("/register", response=AuthResult, operation_id="register")
@@ -275,6 +304,56 @@ def logout_other_sessions(request):
     profile.save(update_fields=["security_stamp"])
     access, refresh = _issue_tokens(user)
     return {"access": access, "refresh": refresh}
+
+
+@router.post(
+    "/password/change", response=TokenPair, auth=JWTAuth(), operation_id="change_password"
+)
+def change_password(request, payload: ChangePasswordIn):
+    # Logged-in user changing their own password — must prove the current one.
+    user = request.auth
+    if not user.check_password(payload.current_password):
+        raise HttpError(400, "Невірний поточний пароль")
+    return _set_new_password(user, payload.new_password)
+
+
+@router.post(
+    "/password/reset/request", response=OkOut, operation_id="request_password_reset"
+)
+def request_password_reset(request, payload: PasswordResetRequestIn):
+    # "Forgot password": email a one-time reset link. Only real password-based
+    # accounts get one (Google accounts have an unusable password). Always
+    # returns ok so we never reveal which emails are registered.
+    email = payload.email.strip().lower()
+    user = User.objects.filter(email__iexact=email).first()
+    if user and user.has_usable_password():
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_url = (
+            f"{str(settings.FRONTEND_URL).rstrip('/')}"
+            f"/reset-password?uid={uid}&token={token}"
+        )
+        send_password_reset_async(
+            user.email, user.first_name or user.username, reset_url
+        )
+    return {"ok": True}
+
+
+@router.post(
+    "/password/reset/confirm", response=TokenPair, operation_id="confirm_password_reset"
+)
+def confirm_password_reset(request, payload: PasswordResetConfirmIn):
+    # Verify the emailed link and set the new password. Setting it changes the
+    # password hash, which invalidates this (single-use) token. Returns fresh
+    # tokens so the user is logged straight in.
+    try:
+        uid = force_str(urlsafe_base64_decode(payload.uid))
+        user = User.objects.get(pk=uid)
+    except (ValueError, TypeError, OverflowError, User.DoesNotExist):
+        raise HttpError(400, "Недійсне посилання для відновлення пароля")
+    if not default_token_generator.check_token(user, payload.token):
+        raise HttpError(400, "Посилання недійсне або протерміноване")
+    return _set_new_password(user, payload.new_password)
 
 
 @router.get("/me", response=UserOut, auth=JWTAuth(), operation_id="me")

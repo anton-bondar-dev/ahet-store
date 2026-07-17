@@ -123,6 +123,25 @@ class AccessOut(Schema):
     access: str
 
 
+class ChangePasswordIn(Schema):
+    current_password: str
+    new_password: str
+
+
+class PasswordResetRequestIn(Schema):
+    email: str
+
+
+class PasswordResetConfirmIn(Schema):
+    uid: str
+    token: str
+    new_password: str
+
+
+class OkOut(Schema):
+    ok: bool
+
+
 class TelegramLinkOut(Schema):
     url: str
     token: str

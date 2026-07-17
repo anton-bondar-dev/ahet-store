@@ -93,6 +93,15 @@ export function LoginPage() {
           />
         </label>
 
+        <div className="-mt-2 flex justify-end">
+          <Link
+            to="/forgot-password"
+            className="text-xs font-medium text-gray-500 transition hover:text-brand"
+          >
+            Забули пароль?
+          </Link>
+        </div>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button

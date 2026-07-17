@@ -6,7 +6,9 @@ import { AccountPage } from '../pages/AccountPage'
 import { AdminSupportPage } from '../pages/AdminSupportPage'
 import { CartPage } from '../pages/CartPage'
 import { CheckoutPage } from '../pages/CheckoutPage'
+import { ForgotPasswordPage } from '../pages/ForgotPasswordPage'
 import { LoginPage } from '../pages/LoginPage'
+import { ResetPasswordPage } from '../pages/ResetPasswordPage'
 import { OrderSuccessPage } from '../pages/OrderSuccessPage'
 import { ProductDetail } from '../pages/ProductDetail'
 import { RegisterPage } from '../pages/RegisterPage'
@@ -42,6 +44,8 @@ export function AppShell() {
         <Route path="/order-success/:id" element={<OrderSuccessPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/account" element={<AccountPage />} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/me/support" element={<UserSupportPage />} />

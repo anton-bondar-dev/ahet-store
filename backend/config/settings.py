@@ -75,6 +75,10 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
+# Public frontend origin — used to build links (e.g. the password-reset link) in
+# outgoing emails.
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
 
 # Application definition
 
