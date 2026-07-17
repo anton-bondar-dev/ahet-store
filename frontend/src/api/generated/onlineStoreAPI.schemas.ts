@@ -33,7 +33,6 @@ export interface ProductOut {
   reviews_count: number;
   is_new: boolean;
   bonus_amount: number;
-  trending_score?: number;
 }
 
 export interface SuggestionOut {
@@ -512,6 +511,24 @@ export interface OperatorAnalyticsOut {
   avg_resolution_hours?: number | null;
   satisfaction_rate?: number | null;
   trending_products: TrendingProductOut[];
+}
+
+export interface StaffProductOut {
+  id: number;
+  title: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  price: string;
+  stock: number;
+  is_active: boolean;
+  views_count: number;
+  cart_adds_count: number;
+  purchases_count: number;
+  trending_score?: number;
+}
+
+export interface ProductEditIn {
+  price?: number | string | null;
+  stock?: number | null;
 }
 
 export type ListProductsParams = {

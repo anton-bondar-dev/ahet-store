@@ -29,10 +29,9 @@ def list_categories(request):
 def list_products(request, q: Optional[str] = None, sort: Optional[str] = None):
     products = Product.objects.select_related("category")
     if not q or not q.strip():
-        products = products.with_trending_score()
         if sort == "popular":
             # Trending engine: time-decayed popularity score.
-            return products.order_by("-trending_score", "title")
+            return products.with_trending_score().order_by("-trending_score", "title")
         return products.all()
 
     ql = q.strip().lower()

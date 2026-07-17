@@ -4,16 +4,10 @@ import type { ProductOut } from '../api/generated/onlineStoreAPI.schemas'
 import { productImageUrl } from '../api/http'
 import { useCart } from '../hooks/useCart'
 import { useIsStaff } from '../hooks/useIsStaff'
-import { useTrending } from '../context/TrendingContext'
 import { formatPrice, reviewsPlural } from '../lib/format'
 
 export function ProductCard({ product }: { product: ProductOut }) {
   const isStaff = useIsStaff()
-  const { hot, cold } = useTrending()
-  // Staff-only trending badge: 🔥 top decile, 🧊 bottom decile.
-  const score = product.trending_score ?? 0
-  const trend =
-    isStaff && score > 0 ? (score >= hot ? 'hot' : score <= cold ? 'cold' : null) : null
   const imageUrl = productImageUrl(product.image)
   const isUnavailable = !product.is_active || product.stock === 0
   const onSale = product.discount_price != null && product.is_active
@@ -35,16 +29,6 @@ export function ProductCard({ product }: { product: ProductOut }) {
         {product.is_new && (
           <span className="absolute left-2 top-2 z-10 rounded bg-emerald-500 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-white">
             Новинка
-          </span>
-        )}
-        {trend && (
-          <span
-            className={`absolute right-2 top-2 z-10 rounded-full px-2 py-1 text-xs font-semibold ${
-              trend === 'hot' ? 'bg-red-100 text-red-700' : 'bg-sky-100 text-sky-700'
-            }`}
-            title={trend === 'hot' ? 'У тренді (топ 10%)' : 'Низький попит (нижні 10%)'}
-          >
-            {trend === 'hot' ? '🔥 Hot' : '🧊 Cold'}
           </span>
         )}
         {imageUrl ? (

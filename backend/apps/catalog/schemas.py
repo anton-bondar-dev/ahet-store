@@ -34,11 +34,6 @@ class ProductOut(Schema):
     reviews_count: int
     is_new: bool
     bonus_amount: int
-    trending_score: float = 0  # populated on the product list (staff-only badges)
-
-    @staticmethod
-    def resolve_trending_score(obj):
-        return round(getattr(obj, "trending_score", 0) or 0, 4)
 
     @staticmethod
     def resolve_image(obj):
