@@ -33,6 +33,7 @@ export interface ProductOut {
   reviews_count: number;
   is_new: boolean;
   bonus_amount: number;
+  trending_score?: number;
 }
 
 export interface SuggestionOut {
@@ -461,8 +462,61 @@ export interface BlockUserIn {
   days?: number;
 }
 
+export interface TopProductOut {
+  id: number;
+  title: string;
+  quantity_sold: number;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  revenue: string;
+}
+
+export interface SlaOut {
+  open_tickets: number;
+  closed_tickets: number;
+  overdue_tickets: number;
+  satisfaction_rate?: number | null;
+}
+
+export interface LowStockOut {
+  id: number;
+  title: string;
+  stock: number;
+}
+
+export interface LeadAnalyticsOut {
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  total_revenue: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  month_revenue: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  average_order_value: string;
+  orders_count: number;
+  top_products: TopProductOut[];
+  sla: SlaOut;
+  low_stock: LowStockOut[];
+}
+
+export interface TrendingProductOut {
+  id: number;
+  title: string;
+  slug: string;
+  trending_score: number;
+  views_count: number;
+  cart_adds_count: number;
+  purchases_count: number;
+}
+
+export interface OperatorAnalyticsOut {
+  closed_tickets: number;
+  comments_resolved: number;
+  avg_resolution_hours?: number | null;
+  satisfaction_rate?: number | null;
+  trending_products: TrendingProductOut[];
+}
+
 export type ListProductsParams = {
 q?: string | null;
+sort?: string | null;
 };
 
 export type GetSuggestionsParams = {
