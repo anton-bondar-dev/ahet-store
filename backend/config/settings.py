@@ -107,9 +107,9 @@ NINJA_JWT = {
 # token the flow still works locally via the DEBUG-only dev-approve endpoint.
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_BOT_USERNAME = os.environ.get('TELEGRAM_BOT_USERNAME', 'YourStoreBot')
-# Chat (Team Lead / support group) that receives real-time admin alerts
-# (helpdesk messages, low-stock warnings) and drives the interactive bot menu.
-# Alerts / menu no-op when unset.
+# Chat id(s) that receive real-time admin alerts (helpdesk messages, low-stock)
+# and drive the interactive bot menu / admin commands. A single id or several
+# comma-separated (per-staff chats, or a group id). Alerts / menu no-op when unset.
 TELEGRAM_ADMIN_CHAT_ID = os.environ.get('TELEGRAM_ADMIN_CHAT_ID', '')
 # Optional shared secret validated on the /api/telegram/webhook endpoint.
 TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET', '')

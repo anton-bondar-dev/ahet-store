@@ -16,6 +16,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.accounts.telegram import call
+from apps.core.services.telegram import admin_chat_ids
 
 logger = logging.getLogger("accounts.telegram")
 
@@ -44,9 +45,8 @@ WELCOME = (
 
 
 def is_admin_chat(chat_id) -> bool:
-    """True only for the configured admin/support chat."""
-    admin = str(getattr(settings, "TELEGRAM_ADMIN_CHAT_ID", "") or "")
-    return bool(admin) and str(chat_id) == admin
+    """True for any of the configured admin/support chats."""
+    return str(chat_id) in set(admin_chat_ids())
 
 
 def _send(chat_id, text: str, keyboard: dict | None = None):
@@ -61,24 +61,92 @@ def _send(chat_id, text: str, keyboard: dict | None = None):
     return call("sendMessage", payload)
 
 
-# --- Dispatch ----------------------------------------------------------------
-def handle_admin_message(chat_id, text: str) -> None:
-    """Route an admin's text/button tap to the right reply."""
-    text = (text or "").strip()
-    if text in ("/start", "/menu", "menu"):
-        _send(chat_id, WELCOME, ADMIN_KEYBOARD)
-        return
-    handler = {
+# Explicit slash commands map to the same query handlers as the buttons, so the
+# admin can type them regardless of the keyboard's visibility / group privacy.
+def _admin_command_handlers():
+    return {
+        "/stats": _stats_today,
+        "/tickets": _open_tickets,
+        "/stock": _low_stock,
+        "/admin": _admin_panel,
+    }
+
+
+def _button_handlers():
+    return {
         BTN_STATS: _stats_today,
         BTN_TICKETS: _open_tickets,
         BTN_LOW_STOCK: _low_stock,
         BTN_ADMIN: _admin_panel,
-    }.get(text)
+    }
+
+
+def _command(text: str) -> str:
+    """Normalize a slash command: strip a `@botname` suffix and lowercase.
+    Returns '' when the text isn't a command."""
+    if not text.startswith("/"):
+        return ""
+    return text.split()[0].split("@", 1)[0].lower()
+
+
+# --- Dispatch ----------------------------------------------------------------
+def route(chat_id, text: str) -> bool:
+    """Shared entry for a (non-linking) incoming message. Handles the universal
+    /unlink for anyone, and the admin menu/commands for admin chats only.
+    Returns True when it handled the message."""
+    text = (text or "").strip()
+    if _command(text) == "/unlink":
+        handle_unlink(chat_id)
+        return True
+    if is_admin_chat(chat_id):
+        handle_admin_message(chat_id, text)
+        return True
+    return False
+
+
+def handle_admin_message(chat_id, text: str) -> None:
+    """Route an admin's slash command / button tap to the right reply."""
+    text = (text or "").strip()
+    cmd = _command(text)
+    if cmd in ("/start", "/menu"):
+        _send(chat_id, WELCOME, ADMIN_KEYBOARD)
+        return
+    handler = _admin_command_handlers().get(cmd) or _button_handlers().get(text)
     if handler is not None:
         _send(chat_id, handler())
         return
     # Unknown input — re-show the menu so the keyboard is always available.
     _send(chat_id, "Оберіть дію з меню нижче:", ADMIN_KEYBOARD)
+
+
+def handle_unlink(chat_id) -> None:
+    """Universal /unlink: detach any account(s) bound to this Telegram chat and
+    disable Telegram 2FA on them."""
+    from apps.accounts.models import Profile
+
+    profiles = list(Profile.objects.filter(telegram_chat_id=str(chat_id)))
+    if not profiles:
+        _send(chat_id, "ℹ️ До цього чату не прив'язано жодного акаунта.")
+        return
+    for profile in profiles:
+        profile.telegram_chat_id = None
+        profile.telegram_username = None
+        if profile.preferred_2fa_method == Profile.METHOD_TELEGRAM:
+            profile.preferred_2fa_method = Profile.METHOD_NONE
+            profile.is_2fa_enabled = False
+        profile.save(
+            update_fields=[
+                "telegram_chat_id",
+                "telegram_username",
+                "preferred_2fa_method",
+                "is_2fa_enabled",
+            ]
+        )
+    _send(
+        chat_id,
+        f"✅ Telegram відключено від {len(profiles)} акаунт(ів). "
+        "Двофакторну автентифікацію через Telegram вимкнено.",
+    )
 
 
 # --- Query handlers (return HTML strings) ------------------------------------
@@ -153,3 +221,42 @@ def _low_stock() -> str:
 def _admin_panel() -> str:
     base = str(getattr(settings, "FRONTEND_URL", "http://localhost:5173")).rstrip("/")
     return f"🌐 <b>Адмін-панель</b>\n{base}/support/admin"
+
+
+# --- Command registration (setMyCommands) ------------------------------------
+# Shown for everyone (default scope).
+USER_COMMANDS = [
+    {"command": "start", "description": "Підключити акаунт / показати меню"},
+    {"command": "unlink", "description": "Відключити Telegram від акаунта"},
+]
+# Shown only inside the configured admin chats (BotCommandScopeChat).
+ADMIN_COMMANDS = [
+    {"command": "stats", "description": "Статистика дня"},
+    {"command": "tickets", "description": "Відкриті тікети"},
+    {"command": "stock", "description": "Мало товару (< 5)"},
+    {"command": "admin", "description": "Посилання на адмін-панель"},
+    {"command": "start", "description": "Показати меню"},
+    {"command": "unlink", "description": "Відключити Telegram"},
+]
+
+
+def _as_chat_id(value):
+    v = str(value).strip()
+    return int(v) if v.lstrip("-").isdigit() else v
+
+
+def register_commands() -> dict:
+    """Register bot commands with Telegram via setMyCommands so they appear in
+    the app's command menu. User commands are registered globally (default
+    scope); admin commands are registered only for each configured admin chat."""
+    results = {"default": call("setMyCommands", {"commands": USER_COMMANDS}), "admins": {}}
+    for chat_id in admin_chat_ids():
+        results["admins"][chat_id] = call(
+            "setMyCommands",
+            {
+                "commands": ADMIN_COMMANDS,
+                "scope": {"type": "chat", "chat_id": _as_chat_id(chat_id)},
+            },
+        )
+    logger.info("Registered Telegram commands (admin chats: %s).", list(results["admins"]))
+    return results

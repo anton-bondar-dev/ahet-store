@@ -43,10 +43,11 @@ def telegram_webhook(request):
     chat_id = str((message.get("chat") or {}).get("id", ""))
     text = message.get("text") or ""
 
-    # Security: only the admin chat drives the menu / sees DB summaries.
-    if text and telegram_bot.is_admin_chat(chat_id):
+    # route() gates admin actions/summaries to admin chats internally, while
+    # letting the universal /unlink work for any user.
+    if text:
         try:
-            telegram_bot.handle_admin_message(chat_id, text)
+            telegram_bot.route(chat_id, text)
         except Exception as exc:  # never fail the webhook (Telegram would retry)
             logger.error("Telegram webhook handler error: %s", exc)
 

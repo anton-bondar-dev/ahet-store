@@ -46,6 +46,8 @@ class Command(BaseCommand):
         bot = me["result"]
         self.log(f"Authenticated as @{bot.get('username')} (id {bot.get('id')}).")
         call("deleteWebhook", {"drop_pending_updates": False})
+        telegram_bot.register_commands()
+        self.log("Registered bot commands (setMyCommands).")
         self.log("Cleared any existing webhook. Polling for updates… (Ctrl-C to stop)")
 
         offset = None
@@ -80,17 +82,17 @@ class Command(BaseCommand):
         text = (message.get("text") or "").strip()
         chat_id = str(message.get("chat", {}).get("id", ""))
         parts = text.split(maxsplit=1)
+        cmd0 = parts[0].split("@", 1)[0].lower() if parts else ""
         # 2FA account linking: /start <token>.
-        if parts and parts[0] == "/start" and len(parts) > 1:
+        if cmd0 == "/start" and len(parts) > 1:
             self._handle_start(message)
             return
-        # Admin navigation menu — only from the configured admin chat.
-        if telegram_bot.is_admin_chat(chat_id):
-            self.log(f"admin menu: {text!r} from chat {chat_id}")
-            telegram_bot.handle_admin_message(chat_id, text)
+        # /unlink (anyone) + admin menu / slash commands (admin chats only).
+        if telegram_bot.route(chat_id, text):
+            self.log(f"handled {text!r} from chat {chat_id}")
             return
         # Plain /start from a non-admin → the account-linking hint.
-        if parts and parts[0] == "/start":
+        if cmd0 == "/start":
             self._handle_start(message)
             return
         self.log(f"Ignored message text={text!r} from chat {chat_id}")

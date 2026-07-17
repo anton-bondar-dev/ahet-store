@@ -3,6 +3,7 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
+from apps.accounts import telegram_bot
 from apps.accounts.telegram import call
 
 WEBHOOK_PATH = "/api/telegram/webhook"
@@ -61,6 +62,9 @@ class Command(BaseCommand):
         if not res or not res.get("ok"):
             raise CommandError(f"setWebhook failed: {res}")
         self.stdout.write(self.style.SUCCESS(f"Webhook registered → {url}"))
+        # Also (re)register the command menu so the app shows them.
+        telegram_bot.register_commands()
+        self.stdout.write("Registered bot commands (setMyCommands).")
         if secret:
             self.stdout.write("Secret token enabled (X-Telegram-Bot-Api-Secret-Token).")
         self.stdout.write(
