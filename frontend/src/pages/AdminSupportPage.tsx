@@ -20,6 +20,7 @@ import {
   useTicketAction,
   useTicketPresence,
 } from '../api/generated/support/support'
+import { AnalyticsTab } from '../components/support/AnalyticsTab'
 import { ApprovalsTab } from '../components/support/ApprovalsTab'
 import { AuditLogTab } from '../components/support/AuditLogTab'
 import { CustomerContext } from '../components/support/CustomerContext'
@@ -44,7 +45,7 @@ const QUICK_REPLIES = [
   'Питання вирішено. Гарного дня! 🙂',
 ]
 
-type Tab = 'chats' | 'comments' | 'macros' | 'audit' | 'staff' | 'approvals'
+type Tab = 'chats' | 'comments' | 'macros' | 'audit' | 'staff' | 'approvals' | 'analytics'
 
 export function AdminSupportPage() {
   const navigate = useNavigate()
@@ -101,6 +102,7 @@ function Workspace({
       </div>
 
       <div className="mb-4 flex gap-1 border-b border-gray-200">
+        <TabButton active={tab === 'analytics'} onClick={() => setTab('analytics')}>📊 Аналітика</TabButton>
         <TabButton active={tab === 'chats'} onClick={() => setTab('chats')}>Чати</TabButton>
         <TabButton active={tab === 'comments'} onClick={() => setTab('comments')}>Позначені коментарі</TabButton>
         <TabButton active={tab === 'macros'} onClick={() => setTab('macros')}>Макроси</TabButton>
@@ -117,6 +119,7 @@ function Workspace({
         )}
       </div>
 
+      {tab === 'analytics' && <AnalyticsTab isOwner={isOwner} />}
       {tab === 'chats' && <ChatsTab isOwner={isOwner} />}
       {tab === 'comments' && <TaggedCommentsTab />}
       {tab === 'macros' && <MacrosTab />}

@@ -6,6 +6,7 @@ import {
 } from './api/generated/catalog/catalog'
 import type { ProductOut } from './api/generated/onlineStoreAPI.schemas'
 import { ProductCard } from './components/ProductCard'
+import { TrendingContext } from './context/TrendingContext'
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc' | 'discount'
 
@@ -103,7 +104,20 @@ function App() {
     )
   }
 
+  // Staff-only 🔥/🧊 catalog badges: top/bottom decile of the trending score.
+  const scores = products
+    .map((p) => p.trending_score ?? 0)
+    .filter((s) => s > 0)
+    .sort((a, b) => a - b)
+  const percentile = (p: number) =>
+    scores.length ? scores[Math.min(scores.length - 1, Math.floor(p * scores.length))] : 0
+  const trendCutoffs =
+    scores.length >= 5
+      ? { hot: percentile(0.9), cold: percentile(0.1) }
+      : { hot: Number.POSITIVE_INFINITY, cold: Number.NEGATIVE_INFINITY }
+
   return (
+    <TrendingContext.Provider value={trendCutoffs}>
     <div className="mx-auto flex max-w-7xl gap-8 p-6">
       <aside className="w-56 shrink-0">
         <nav className="flex flex-col gap-1">
@@ -165,6 +179,7 @@ function App() {
         )}
       </main>
     </div>
+    </TrendingContext.Provider>
   )
 }
 
