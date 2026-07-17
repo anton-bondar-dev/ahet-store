@@ -27,7 +27,9 @@ router = Router(tags=["orders"])
 @router.get("/me", response=List[OrderOut], auth=JWTAuth(), operation_id="get_my_orders")
 def get_my_orders(request):
     return list(
-        Order.objects.filter(user=request.auth).prefetch_related("items")
+        Order.objects.filter(user=request.auth)
+        .select_related("coupon")
+        .prefetch_related("items")
     )
 
 
@@ -167,6 +169,8 @@ def get_order(request, order_id: int):
         raise HttpError(400, "Missing identity")
 
     order = get_object_or_404(
-        Order.objects.prefetch_related("items"), owner, id=order_id
+        Order.objects.select_related("coupon").prefetch_related("items"),
+        owner,
+        id=order_id,
     )
     return order

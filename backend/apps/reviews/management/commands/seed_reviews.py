@@ -109,7 +109,7 @@ class Command(BaseCommand):
 
         # 5) Dashboard — 2 reviews on the main account (+ an admin reply on one,
         #    so you also see admin styling on your own review's page).
-        r_main1 = self._review(
+        self._review(
             main, main_products[0], 5,
             "Відмінна покупка! Ціна повністю відповідає якості, усе працює як заявлено. "
             "Рекомендую цей магазин.",

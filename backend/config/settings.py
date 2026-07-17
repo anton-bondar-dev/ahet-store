@@ -33,16 +33,47 @@ os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
 
 
-# Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-hj^jlgegje^6+a6*rs(+kr)g#1w)x(^9pdu*v=h+3791jfvh=o'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+def _env_bool(name: str, default: bool) -> bool:
+    return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
 
-ALLOWED_HOSTS = []
+
+# Toggle DEBUG via the environment (defaults to True for local dev; production
+# must set DEBUG=False).
+DEBUG = _env_bool("DEBUG", True)
+
+# The secret key must come from the environment in production. The insecure
+# default is dev-only — with DEBUG=False, a real SECRET_KEY is required.
+_INSECURE_DEV_KEY = "django-insecure-hj^jlgegje^6+a6*rs(+kr)g#1w)x(^9pdu*v=h+3791jfvh=o"
+SECRET_KEY = os.environ.get("SECRET_KEY", _INSECURE_DEV_KEY)
+if not DEBUG and SECRET_KEY == _INSECURE_DEV_KEY:
+    raise ImproperlyConfigured(
+        "SECRET_KEY must be set in the environment when DEBUG=False."
+    )
+
+# Comma-separated allowed hosts from the environment. Dev defaults to localhost;
+# production must configure ALLOWED_HOSTS explicitly.
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()]
+if not ALLOWED_HOSTS:
+    if DEBUG:
+        ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]", "testserver"]
+    else:
+        raise ImproperlyConfigured(
+            "ALLOWED_HOSTS must be set in the environment when DEBUG=False."
+        )
+
+# Production security headers — applied only when DEBUG=False (assumes the app
+# is served over HTTPS behind a reverse proxy that sets X-Forwarded-Proto).
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = _env_bool("SECURE_SSL_REDIRECT", True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", 2_592_000))  # 30 days
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 
 # Application definition
@@ -81,10 +112,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# CORS: allow the Vite dev server to call the API cross-origin.
+# CORS: the Vite dev server by default; add production frontend origins via the
+# CORS_ALLOWED_ORIGINS env var (comma-separated).
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+]
+CORS_ALLOWED_ORIGINS += [
+    o.strip()
+    for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+    if o.strip()
 ]
 
 # Allow the anonymous-cart session header on cross-origin (preflighted) requests.
@@ -239,6 +276,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+# Destination for `manage.py collectstatic`, served by the web server (nginx /
+# CDN) in production. Django only serves static/media itself while DEBUG=True.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files (user uploads, e.g. product images)
 MEDIA_URL = '/media/'

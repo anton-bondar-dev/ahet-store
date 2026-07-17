@@ -47,7 +47,9 @@ def impersonator_id(request):
 
 
 def _cart_qs():
-    return Cart.objects.prefetch_related("items__product__category")
+    return Cart.objects.prefetch_related(
+        "items__product__category", "items__product__gallery"
+    )
 
 
 def get_current_cart(request) -> Optional[Cart]:

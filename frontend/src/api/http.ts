@@ -8,8 +8,10 @@ import {
 import { getImpersonationToken, stopImpersonation } from '../lib/impersonation';
 import { getSessionId } from '../lib/session';
 
-// Single source of truth for the backend origin.
-export const API_BASE_URL = 'http://127.0.0.1:8000';
+// Single source of truth for the backend origin. Overridable at build time via
+// VITE_API_URL (set it to the API's public origin for production builds).
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 // The Orval-generated client calls the global axios instance with relative
 // paths (e.g. `/api/catalog/products`), so we set the backend origin here once.

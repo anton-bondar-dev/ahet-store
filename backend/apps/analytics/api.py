@@ -5,7 +5,6 @@ from django.db.models import (
     DurationField,
     ExpressionWrapper,
     F,
-    Q,
     Sum,
 )
 from django.utils import timezone
