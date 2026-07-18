@@ -1,0 +1,30 @@
+# Version control
+.git
+.gitignore
+
+# Python virtualenvs and caches
+.venv
+venv
+__pycache__
+*.py[cod]
+
+# Secrets — never bake real env values into the image (mounted via env_file)
+.env
+*.env
+.env.*
+!.env.example
+
+# Local data that lives in volumes, not the image
+media/
+staticfiles/
+*.sqlite3
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# OS / IDE cruft
+.DS_Store
+.idea/
+.vscode/

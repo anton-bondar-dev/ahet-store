@@ -1,0 +1,50 @@
+# Production stack for the Ahet Store backend.
+#
+# Run from this directory:  docker compose up -d --build
+#
+# NOTE: the app reads its config from ./.env (env_file below). For a real
+# production run that file MUST contain:
+#   DEBUG=False
+#   SECRET_KEY=<a long random value>
+#   ALLOWED_HOSTS=your.domain.com
+# Without them the app falls back to dev defaults (DEBUG=True). DB_HOST is
+# overridden to the "db" service below, so the .env value is irrelevant here.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # postgres:16 expects POSTGRES_*; map our DB_* names (from ./.env) onto them.
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    # Overrides win over env_file: talk to the db service, not localhost.
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist user uploads and collected static files on the host so a
+      # reverse proxy (Nginx) can serve them and they survive rebuilds.
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

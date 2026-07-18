@@ -12,6 +12,7 @@ django-ninja==1.6.2
 django-ninja-extra==0.31.5
 django-ninja-jwt==5.4.4
 google-auth==2.55.2
+gunicorn==23.0.0
 idna==3.18
 injector==0.24.0
 pillow==12.3.0
