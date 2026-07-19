@@ -46,5 +46,22 @@ services:
       db:
         condition: service_healthy
 
+  # Telegram 2FA bot: long-polls getUpdates to handle /start linking and
+  # tap-to-approve login. Reuses the web image; no ports (outbound only).
+  # entrypoint cleared so it skips migrate/collectstatic (web already does that)
+  # and runs the poller directly.
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    entrypoint: []
+    command: ["python", "manage.py", "run_telegram_bot"]
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:
