@@ -7,7 +7,6 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('coupons', '0001_initial'),
         ('orders', '0007_order_coupon_order_coupon_discount'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
