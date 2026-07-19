@@ -9,10 +9,9 @@ from ninja.errors import HttpError
 from apps.catalog.models import Product
 from apps.catalog.tree import attach_ancestors
 from apps.core.permissions import forbid_blocked, forbid_staff
-from apps.coupons.models import Coupon
 
 from .models import Cart, CartItem
-from .schemas import AddToCartIn, ApplyCouponIn, CartOut, UpdateQuantityIn
+from .schemas import AddToCartIn, CartOut, UpdateQuantityIn
 from .services import auth_user, get_current_cart, get_or_create_current_cart
 
 router = Router(tags=["cart"])
@@ -30,11 +29,7 @@ def serialize_cart(cart: Optional[Cart]) -> dict:
     # Returns a plain dict with raw Product instances so Ninja serializes the
     # whole tree against CartOut in one pass (applies ProductOut resolvers).
     if cart is None:
-        return {
-            "items": [], "total_quantity": 0, "total_price": Decimal("0.00"),
-            "coupon_code": None, "coupon_discount": Decimal("0.00"),
-            "total_after_discount": Decimal("0.00"),
-        }
+        return {"items": [], "total_quantity": 0, "total_price": Decimal("0.00")}
 
     items = []
     total_quantity = 0
@@ -50,20 +45,10 @@ def serialize_cart(cart: Optional[Cart]) -> dict:
     # Breadcrumb ancestors for each line's product category, in one bulk query.
     attach_ancestors([it["product"].category for it in items])
 
-    # Coupon: apply only if still valid for the current subtotal.
-    coupon_code = None
-    coupon_discount = Decimal("0.00")
-    if cart.coupon and cart.coupon.is_valid(total_price):
-        coupon_code = cart.coupon.code
-        coupon_discount = cart.coupon.discount_for(total_price)
-
     return {
         "items": items,
         "total_quantity": total_quantity,
         "total_price": total_price,
-        "coupon_code": coupon_code,
-        "coupon_discount": coupon_discount,
-        "total_after_discount": total_price - coupon_discount,
     }
 
 
@@ -87,47 +72,6 @@ def add_to_cart(request, payload: AddToCartIn):
     # Trending engine: count the cart addition (atomic).
     Product.objects.filter(id=product.id).update(cart_adds_count=F("cart_adds_count") + 1)
 
-    return serialize_cart(get_current_cart(request))
-
-
-def _cart_subtotal(cart: Optional[Cart]) -> Decimal:
-    if cart is None:
-        return Decimal("0.00")
-    total = Decimal("0.00")
-    for item in cart.items.all():
-        if item.quantity > 0:
-            total += item.product.effective_price * item.quantity
-    return total
-
-
-# Literal /coupon routes MUST be registered before the /{item_id} routes so the
-# param route doesn't capture them.
-@router.post("/coupon", response=CartOut, operation_id="apply_coupon")
-def apply_coupon(request, payload: ApplyCouponIn):
-    _require_customer(request)
-    cart = get_or_create_current_cart(request)
-    if cart is None:
-        raise HttpError(400, "Missing X-Session-Id header")
-
-    code = payload.code.strip().upper()
-    coupon = Coupon.objects.filter(code=code).first()
-    if coupon is None:
-        raise HttpError(404, "Промокод не знайдено")
-    if not coupon.is_valid(_cart_subtotal(cart)):
-        raise HttpError(400, "Промокод недійсний або не відповідає умовам")
-
-    cart.coupon = coupon
-    cart.save(update_fields=["coupon"])
-    return serialize_cart(get_current_cart(request))
-
-
-@router.delete("/coupon", response=CartOut, operation_id="remove_coupon")
-def remove_coupon(request):
-    _require_customer(request)
-    cart = get_current_cart(request)
-    if cart is not None and cart.coupon_id is not None:
-        cart.coupon = None
-        cart.save(update_fields=["coupon"])
     return serialize_cart(get_current_cart(request))
 
 

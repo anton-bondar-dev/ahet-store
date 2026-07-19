@@ -304,9 +304,8 @@ class ImpersonateOut(Schema):
 
 # --- Phase 5: actionable chat ------------------------------------------------
 class ChatActionIn(Schema):
-    type: str              # "grant_bonuses" | "generate_coupon"
+    type: str              # "grant_bonuses"
     amount: int = 0        # bonuses to grant
-    percent: int = 0       # coupon discount %
 
 
 class ActionResultOut(Schema):
@@ -321,7 +320,6 @@ class ApprovalOut(Schema):
     customer_name: str
     action_type: str
     amount: int
-    percent: int
     created_at: datetime
 
     @staticmethod

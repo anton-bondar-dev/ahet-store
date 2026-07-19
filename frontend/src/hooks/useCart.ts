@@ -3,10 +3,8 @@ import type { AxiosResponse } from 'axios'
 import {
   getGetCartQueryKey,
   useAddToCart,
-  useApplyCoupon,
   useDeleteCartItem,
   useGetCart,
-  useRemoveCoupon,
   useUpdateCartItem,
 } from '../api/generated/cart/cart'
 import type { CartOut } from '../api/generated/onlineStoreAPI.schemas'
@@ -25,8 +23,6 @@ export function useCart() {
   const addMutation = useAddToCart({ mutation: { onSuccess } })
   const updateMutation = useUpdateCartItem({ mutation: { onSuccess } })
   const deleteMutation = useDeleteCartItem({ mutation: { onSuccess } })
-  const applyCouponMutation = useApplyCoupon({ mutation: { onSuccess } })
-  const removeCouponMutation = useRemoveCoupon({ mutation: { onSuccess } })
 
   const cart = cartQuery.data?.data
   const items = cart?.items ?? []
@@ -38,20 +34,11 @@ export function useCart() {
     items,
     totalQuantity,
     totalPrice,
-    // Coupon (all discount-aware totals come from the backend).
-    couponCode: cart?.coupon_code ?? null,
-    couponDiscount: cart?.coupon_discount ?? '0.00',
-    totalAfterDiscount: cart?.total_after_discount ?? totalPrice,
     addToCart: (productId: number, quantity = 1) =>
       addMutation.mutateAsync({ data: { product_id: productId, quantity } }),
     updateQuantity: (itemId: number, quantity: number) =>
       updateMutation.mutateAsync({ itemId, data: { quantity } }),
     removeItem: (itemId: number) => deleteMutation.mutateAsync({ itemId }),
-    applyCoupon: (code: string) =>
-      applyCouponMutation.mutateAsync({ data: { code } }),
-    removeCoupon: () => removeCouponMutation.mutateAsync(),
     isAdding: addMutation.isPending,
-    isApplyingCoupon: applyCouponMutation.isPending,
-    isRemovingCoupon: removeCouponMutation.isPending,
   }
 }

@@ -1,4 +1,3 @@
-import secrets
 from datetime import timedelta
 from typing import List
 
@@ -13,14 +12,11 @@ from ninja_jwt.tokens import AccessToken
 
 from apps.accounts.models import Profile
 from apps.core.permissions import forbid_blocked, forbid_staff, is_staff_user
-from apps.coupons.models import Coupon
 from apps.orders.models import Order
 from apps.reviews.models import Review
 
 from .models import (
     AUTO_APPROVE_BONUSES,
-    AUTO_APPROVE_COUPON_PERCENT,
-    MAX_COUPON_PERCENT,
     MAX_GRANT_BONUSES,
     WELCOME_MESSAGE,
     ActionApproval,
@@ -546,30 +542,18 @@ def ticket_presence(request, ticket_id: int, payload: PresenceIn):
 
 
 # --- Phase 5: actionable chat ------------------------------------------------
-def _execute_chat_action(staff, ticket, action_type, amount, percent):
-    """Apply a bonus/coupon gift: mutate state, drop a system message, audit."""
+def _execute_chat_action(staff, ticket, action_type, amount):
+    """Apply a bonus gift: mutate state, drop a system message, audit."""
     customer = ticket.user
-    if action_type == ActionApproval.GRANT_BONUSES:
-        profile, _ = Profile.objects.get_or_create(user=customer)
-        profile.bonus_balance += amount
-        profile.save(update_fields=["bonus_balance"])
-        text = f"Адміністратор подарував вам {amount} бонусів."
-        meta = {"action": "grant_bonuses", "amount": amount}
-        log_admin_action(
-            staff, AdminAuditLog.ACTION_GRANT_BONUSES, target_user=customer, ticket=ticket,
-            amount=amount,
-        )
-    else:  # generate_coupon
-        code = f"SUP{secrets.token_hex(3).upper()}"
-        Coupon.objects.create(
-            code=code, discount_type=Coupon.PERCENTAGE, discount_value=percent,
-        )
-        text = f"Адміністратор згенерував для вас промокод {code} на знижку {percent}%."
-        meta = {"action": "generate_coupon", "code": code, "percent": percent}
-        log_admin_action(
-            staff, AdminAuditLog.ACTION_GENERATE_COUPON, target_user=customer, ticket=ticket,
-            code=code, percent=percent,
-        )
+    profile, _ = Profile.objects.get_or_create(user=customer)
+    profile.bonus_balance += amount
+    profile.save(update_fields=["bonus_balance"])
+    text = f"Адміністратор подарував вам {amount} бонусів."
+    meta = {"action": "grant_bonuses", "amount": amount}
+    log_admin_action(
+        staff, AdminAuditLog.ACTION_GRANT_BONUSES, target_user=customer, ticket=ticket,
+        amount=amount,
+    )
     ChatMessage.objects.create(
         ticket=ticket, sender=staff, from_staff=True, is_system=True, text=text, meta=meta,
     )
@@ -587,7 +571,7 @@ def ticket_action(request, ticket_id: int, payload: ChatActionIn):
     staff = _require_staff(request)
     ticket = get_object_or_404(SupportTicket.objects.select_related("user"), id=ticket_id)
 
-    # Validate against the hard ceilings, then decide whether the Team Lead's
+    # Validate against the hard ceiling, then decide whether the Team Lead's
     # approval is required (operators only, above their auto-approve threshold).
     if payload.type == "grant_bonuses":
         amount = payload.amount
@@ -596,24 +580,17 @@ def ticket_action(request, ticket_id: int, payload: ChatActionIn):
         if amount > MAX_GRANT_BONUSES:
             raise HttpError(400, f"Максимум {MAX_GRANT_BONUSES} бонусів на клієнта")
         needs_approval = not staff.is_superuser and amount > AUTO_APPROVE_BONUSES
-        percent = 0
-    elif payload.type == "generate_coupon":
-        percent = payload.percent
-        if percent < 1 or percent > MAX_COUPON_PERCENT:
-            raise HttpError(400, f"Знижка від 1% до {MAX_COUPON_PERCENT}%")
-        needs_approval = not staff.is_superuser and percent > AUTO_APPROVE_COUPON_PERCENT
-        amount = 0
     else:
         raise HttpError(400, "Невідома дія")
 
     if needs_approval:
         ActionApproval.objects.create(
             requested_by=staff, ticket=ticket, action_type=payload.type,
-            amount=amount, percent=percent,
+            amount=amount,
         )
         return {"ok": True, "pending": True}
 
-    _execute_chat_action(staff, ticket, payload.type, amount, percent)
+    _execute_chat_action(staff, ticket, payload.type, amount)
     return {"ok": True, "pending": False}
 
 
@@ -643,7 +620,7 @@ def approve_action(request, approval_id: int):
     if appr.status != ActionApproval.PENDING:
         raise HttpError(400, "Запит вже опрацьовано")
     # Execute crediting the original requester (their action, lead-approved).
-    _execute_chat_action(appr.requested_by, appr.ticket, appr.action_type, appr.amount, appr.percent)
+    _execute_chat_action(appr.requested_by, appr.ticket, appr.action_type, appr.amount)
     appr.status = ActionApproval.APPROVED
     appr.decided_by = owner
     appr.decided_at = timezone.now()

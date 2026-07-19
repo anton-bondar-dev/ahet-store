@@ -59,7 +59,7 @@ class ImpersonationSessionAdmin(admin.ModelAdmin):
 
 @admin.register(ActionApproval)
 class ActionApprovalAdmin(admin.ModelAdmin):
-    list_display = ("id", "action_type", "requested_by", "amount", "percent", "status", "created_at")
+    list_display = ("id", "action_type", "requested_by", "amount", "status", "created_at")
     list_filter = ("status", "action_type")
 
 

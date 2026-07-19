@@ -95,20 +95,11 @@ export interface CartOut {
   total_quantity: number;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   total_price: string;
-  coupon_code?: string | null;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  coupon_discount?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  total_after_discount?: string;
 }
 
 export interface AddToCartIn {
   product_id: number;
   quantity?: number;
-}
-
-export interface ApplyCouponIn {
-  code: string;
 }
 
 export interface UpdateQuantityIn {
@@ -130,9 +121,6 @@ export interface OrderOut {
   total_price: string;
   bonus_earned: number;
   applied_bonuses: number;
-  coupon_code?: string | null;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  coupon_discount: string;
   created_at: string;
   items: OrderItemOut[];
 }
@@ -424,7 +412,6 @@ export interface ActionResultOut {
 export interface ChatActionIn {
   type: string;
   amount?: number;
-  percent?: number;
 }
 
 export interface ApprovalOut {
@@ -434,7 +421,6 @@ export interface ApprovalOut {
   customer_name: string;
   action_type: string;
   amount: number;
-  percent: number;
   created_at: string;
 }
 

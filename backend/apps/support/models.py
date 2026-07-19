@@ -11,12 +11,10 @@ SUPPORT_DISPLAY_NAME = "ahetStore"
 SLA_RESPONSE_HOURS = 24
 
 # Actionable-chat limits. Hard ceilings apply to everyone; operators may act
-# freely up to the auto-approve thresholds, but larger gifts (up to the hard
-# cap) need the Team Lead's approval.
+# freely up to the auto-approve threshold, but larger bonus gifts (up to the
+# hard cap) need the Team Lead's approval.
 MAX_GRANT_BONUSES = 5000
-MAX_COUPON_PERCENT = 100
 AUTO_APPROVE_BONUSES = 500
-AUTO_APPROVE_COUPON_PERCENT = 20
 
 # Auto-reply posted the moment a user opens a new ticket (i.e. sends their first
 # message), so they get an immediate acknowledgement while waiting for a human.
@@ -266,7 +264,6 @@ class AdminAuditLog(models.Model):
     ACTION_TAG_ADD = "tag_add"
     ACTION_TAG_REMOVE = "tag_remove"
     ACTION_GRANT_BONUSES = "grant_bonuses"
-    ACTION_GENERATE_COUPON = "generate_coupon"
     ACTION_CLOSE_TICKET = "close_ticket"
 
     admin_user = models.ForeignKey(
@@ -292,7 +289,7 @@ class AdminAuditLog(models.Model):
 
 
 class ActionApproval(models.Model):
-    """A large bonus/coupon gift requested by an operator that exceeds their
+    """A large bonus gift requested by an operator that exceeds their
     auto-approve threshold — it waits in the Team Lead's mini-list until they
     approve (executes it) or reject it."""
 
@@ -300,7 +297,6 @@ class ActionApproval(models.Model):
     STATUS_CHOICES = [(PENDING, "Pending"), (APPROVED, "Approved"), (REJECTED, "Rejected")]
 
     GRANT_BONUSES = "grant_bonuses"
-    GENERATE_COUPON = "generate_coupon"
 
     requested_by = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="approval_requests"
@@ -308,7 +304,6 @@ class ActionApproval(models.Model):
     ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name="approvals")
     action_type = models.CharField(max_length=20)
     amount = models.IntegerField(default=0)
-    percent = models.IntegerField(default=0)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     decided_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="approvals_decided"

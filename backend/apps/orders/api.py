@@ -16,7 +16,6 @@ from apps.cart.services import (
 )
 from apps.catalog.models import Product
 from apps.core.permissions import forbid_blocked, forbid_staff
-from apps.coupons.models import Coupon
 
 from .models import Order, OrderItem
 from .schemas import CheckoutIn, OrderCreatedOut, OrderOut
@@ -27,9 +26,7 @@ router = Router(tags=["orders"])
 @router.get("/me", response=List[OrderOut], auth=JWTAuth(), operation_id="get_my_orders")
 def get_my_orders(request):
     return list(
-        Order.objects.filter(user=request.auth)
-        .select_related("coupon")
-        .prefetch_related("items")
+        Order.objects.filter(user=request.auth).prefetch_related("items")
     )
 
 
@@ -101,24 +98,8 @@ def checkout(request, payload: CheckoutIn):
         OrderItem.objects.bulk_create(order_items)
         Product.objects.bulk_update(locked.values(), ["stock", "purchases_count"])
 
-        # Money order: subtotal → coupon discount → bonus cap on the remainder.
+        # Money order: subtotal → bonus cap on the subtotal.
         subtotal = total_price  # Σ effective_price × qty
-        # Lock the coupon row so two concurrent checkouts can't both pass the
-        # max_uses check and over-increment used_count (SET_NULL guarantees a
-        # set coupon_id still points at a live row).
-        coupon = None
-        if cart.coupon_id is not None:
-            coupon = (
-                Coupon.objects.select_for_update().filter(id=cart.coupon_id).first()
-            )
-        coupon_discount = Decimal("0.00")
-        if coupon and coupon.is_valid(subtotal):
-            coupon_discount = coupon.discount_for(subtotal)
-            coupon.used_count += 1
-            coupon.save(update_fields=["used_count"])
-        else:
-            coupon = None
-        after_coupon = subtotal - coupon_discount
 
         bonus_earned = sum(
             locked[item.product_id].bonus_amount * item.quantity for item in items
@@ -126,9 +107,9 @@ def checkout(request, payload: CheckoutIn):
         applied = 0
         if user is not None:
             profile, _ = Profile.objects.get_or_create(user=user)
-            # Cap: 75% of the post-coupon amount at ≥500 UAH, else 50%; and by the balance.
-            pct = Decimal("0.75") if after_coupon >= 500 else Decimal("0.50")
-            max_applicable = int(after_coupon * pct)  # floor → integer UAH
+            # Cap: 75% of the order amount at ≥500 UAH, else 50%; and by the balance.
+            pct = Decimal("0.75") if subtotal >= 500 else Decimal("0.50")
+            max_applicable = int(subtotal * pct)  # floor → integer UAH
             applied = max(
                 0, min(payload.applied_bonuses, max_applicable, profile.bonus_balance)
             )
@@ -140,13 +121,11 @@ def checkout(request, payload: CheckoutIn):
         else:
             bonus_earned = 0
 
-        order.total_price = after_coupon - applied  # amount actually due
+        order.total_price = subtotal - applied  # amount actually due
         order.bonus_earned = bonus_earned
         order.applied_bonuses = applied
-        order.coupon = coupon
-        order.coupon_discount = coupon_discount
         order.save(update_fields=[
-            "total_price", "bonus_earned", "applied_bonuses", "coupon", "coupon_discount",
+            "total_price", "bonus_earned", "applied_bonuses",
         ])
 
         cart.items.all().delete()
@@ -169,7 +148,7 @@ def get_order(request, order_id: int):
         raise HttpError(400, "Missing identity")
 
     order = get_object_or_404(
-        Order.objects.select_related("coupon").prefetch_related("items"),
+        Order.objects.prefetch_related("items"),
         owner,
         id=order_id,
     )

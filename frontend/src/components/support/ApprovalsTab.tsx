@@ -6,8 +6,8 @@ import {
   useRejectAction,
 } from '../../api/generated/support/support'
 
-// The Team Lead's mini-list: bonus/coupon gifts an operator requested that
-// exceed their auto-approve threshold, awaiting approval or rejection.
+// The Team Lead's mini-list: bonus gifts an operator requested that exceed
+// their auto-approve threshold, awaiting approval or rejection.
 export function ApprovalsTab() {
   const queryClient = useQueryClient()
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getListApprovalsQueryKey() })
@@ -31,9 +31,7 @@ export function ApprovalsTab() {
         <li key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
           <div className="min-w-0 text-sm">
             <p className="font-medium text-gray-900">
-              {a.action_type === 'grant_bonuses'
-                ? `Нарахувати ${a.amount} бонусів`
-                : `Промокод на ${a.percent}%`}
+              Нарахувати {a.amount} бонусів
             </p>
             <p className="text-xs text-gray-500">
               Запит від <strong>{a.requested_by}</strong> · клієнт {a.customer_name}

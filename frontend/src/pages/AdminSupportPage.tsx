@@ -522,10 +522,9 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
               {messages.length === 0 && <p className="mt-6 text-center text-sm text-gray-400">Повідомлень немає</p>}
             </div>
 
-            {/* Actionable chat (bonuses / coupons) */}
+            {/* Actionable chat (bonus gifts) */}
             <ActionBar
               onGrant={(amount) => actionMutation.mutate({ ticketId: selectedId, data: { type: 'grant_bonuses', amount } })}
-              onCoupon={(percent) => actionMutation.mutate({ ticketId: selectedId, data: { type: 'generate_coupon', percent } })}
               note={actionMsg}
             />
 
@@ -617,38 +616,30 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
 }
 
 const MAX_BONUS = 5000
-const MAX_PERCENT = 100
 
 function ActionBar({
   onGrant,
-  onCoupon,
   note,
 }: {
   onGrant: (amount: number) => void
-  onCoupon: (percent: number) => void
   note: string | null
 }) {
-  const [open, setOpen] = useState<'bonus' | 'coupon' | null>(null)
+  const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
 
   const submit = () => {
-    const cap = open === 'bonus' ? MAX_BONUS : MAX_PERCENT
-    const n = Math.min(parseInt(value, 10) || 0, cap)
+    const n = Math.min(parseInt(value, 10) || 0, MAX_BONUS)
     if (n <= 0) return
-    if (open === 'bonus') onGrant(n)
-    if (open === 'coupon') onCoupon(n)
+    onGrant(n)
     setValue('')
-    setOpen(null)
+    setOpen(false)
   }
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-100 px-2 pt-2">
       {note && <span className="w-full text-xs text-amber-600">{note}</span>}
-      <button type="button" onClick={() => setOpen(open === 'bonus' ? null : 'bonus')} className="rounded-md bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="rounded-md bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200">
         🎁 Бонуси
-      </button>
-      <button type="button" onClick={() => setOpen(open === 'coupon' ? null : 'coupon')} className="rounded-md bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-200">
-        🎟 Купон
       </button>
       {open && (
         <div className="flex items-center gap-1">
@@ -656,11 +647,11 @@ function ActionBar({
             autoFocus
             type="number"
             min={1}
-            max={open === 'bonus' ? MAX_BONUS : MAX_PERCENT}
+            max={MAX_BONUS}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
-            placeholder={open === 'bonus' ? `к-сть (макс ${MAX_BONUS})` : `% (макс ${MAX_PERCENT})`}
+            placeholder={`к-сть (макс ${MAX_BONUS})`}
             className="w-28 rounded-md border border-gray-300 px-2 py-1 text-xs focus:outline-none"
           />
           <button type="button" onClick={submit} className="rounded-md bg-gray-900 px-2 py-1 text-xs font-semibold text-white hover:bg-gray-700">

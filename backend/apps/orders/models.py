@@ -46,11 +46,6 @@ class Order(models.Model):
     bonus_earned = models.IntegerField(default=0)
     # Bonus points spent on this order (1 bonus = 1 UAH); total_price is net of these.
     applied_bonuses = models.IntegerField(default=0)
-    # Discount coupon applied (if any) and the UAH amount it took off.
-    coupon = models.ForeignKey(
-        "coupons.Coupon", on_delete=models.SET_NULL, blank=True, null=True
-    )
-    coupon_discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
