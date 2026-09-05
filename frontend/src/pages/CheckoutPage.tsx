@@ -31,7 +31,7 @@ const EMPTY: Form = {
 export function CheckoutPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { items, totalQuantity, totalPrice } = useCart()
+  const { items, totalQuantity, totalPrice, isLoading: cartLoading } = useCart()
   const { user, refreshUser } = useAuth()
   const isStaff = useIsStaff()
   const checkout = useCheckout()
@@ -87,6 +87,18 @@ export function CheckoutPage() {
 
   // Staff can't place orders — the checkout page is off-limits.
   if (isStaff) return <Navigate to="/" replace />
+
+  // Don't flash "cart is empty" while the cart is still being fetched.
+  if (cartLoading) {
+    return (
+      <div className="mx-auto max-w-2xl p-6">
+        <h1 className="mb-4 text-2xl font-bold text-gray-900">Оформлення замовлення</h1>
+        <div className="rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-500">Завантаження кошика…</p>
+        </div>
+      </div>
+    )
+  }
 
   if (totalQuantity === 0) {
     return (

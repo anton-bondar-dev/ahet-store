@@ -7,7 +7,8 @@ import { QuantityStepper } from '../components/QuantityStepper'
 
 export function CartPage() {
   const isStaff = useIsStaff()
-  const { items, totalQuantity, totalPrice, updateQuantity, removeItem } = useCart()
+  const { items, totalQuantity, totalPrice, updateQuantity, removeItem, isLoading } =
+    useCart()
 
   // Staff have no cart — bounce them back to the catalog.
   if (isStaff) return <Navigate to="/" replace />
@@ -20,7 +21,11 @@ export function CartPage() {
     <div className="mx-auto max-w-4xl p-6">
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Кошик</h1>
 
-      {activeItems.length === 0 ? (
+      {isLoading ? (
+        <div className="rounded-lg border border-gray-200 p-8 text-center">
+          <p className="text-gray-500">Завантаження кошика…</p>
+        </div>
+      ) : activeItems.length === 0 ? (
         <div className="rounded-lg border border-gray-200 p-8 text-center">
           <p className="text-gray-500">Кошик порожній.</p>
           <Link

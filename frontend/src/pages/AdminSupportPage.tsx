@@ -444,7 +444,7 @@ function ChatsTab({ isOwner }: { isOwner: boolean }) {
                 <select
                   value={ticket?.priority ?? 'normal'}
                   onChange={(e) => priorityMutation.mutate({ ticketId: selectedId, data: { priority: e.target.value } })}
-                  className={`rounded-md border px-2 py-1 text-xs font-semibold focus:outline-none ${PRIORITY_META[ticket?.priority ?? 'normal'].cls}`}
+                  className={`rounded-md border px-2 py-1 text-xs font-semibold focus:outline-none ${PRIORITY_META[ticket?.priority ?? 'normal']?.cls ?? ''}`}
                   title="Пріоритет"
                 >
                   {Object.entries(PRIORITY_META).map(([key, m]) => (
