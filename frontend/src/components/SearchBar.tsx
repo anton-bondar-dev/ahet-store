@@ -51,7 +51,7 @@ export function SearchBar() {
   const showDropdown = open && (recent.length > 0 || suggestions.length > 0)
 
   return (
-    <div ref={containerRef} className="relative max-w-md flex-1">
+    <div ref={containerRef} className="relative order-last w-full min-w-0 sm:order-none sm:w-auto sm:max-w-md sm:flex-1">
       <form
         onSubmit={(e) => {
           e.preventDefault()

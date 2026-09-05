@@ -17,11 +17,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-[60] border-t-[3px] border-brand border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-4 sm:px-6">
         {/* Logo / store name */}
         <Link
           to="/"
-          className="group shrink-0 text-2xl font-extrabold tracking-tight text-gray-900"
+          className="group shrink-0 text-xl font-extrabold tracking-tight text-gray-900 sm:text-2xl"
         >
           Ahet <span className="text-brand transition group-hover:text-brand-dark">Store</span>
         </Link>
@@ -50,7 +50,7 @@ export function Header() {
               <circle cx="20" cy="21" r="1" />
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
             </svg>
-            <span>Кошик ({totalQuantity})</span>
+            <span><span className="hidden sm:inline">Кошик </span>({totalQuantity})</span>
           </button>
         )}
 
@@ -72,7 +72,7 @@ export function Header() {
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
-            <span>Обране{wishlistCount > 0 ? ` (${wishlistCount})` : ''}</span>
+            <span><span className="hidden sm:inline">Обране</span>{wishlistCount > 0 ? ` (${wishlistCount})` : ''}</span>
           </Link>
         )}
 
@@ -116,7 +116,7 @@ export function Header() {
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
-            <span className="max-w-[8rem] truncate">{user.first_name || user.username}</span>
+            <span className="hidden max-w-[8rem] truncate sm:inline">{user.first_name || user.username}</span>
           </Link>
         ) : (
           <Link

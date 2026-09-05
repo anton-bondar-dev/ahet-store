@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   useListCategories,
@@ -32,6 +32,24 @@ function discountAmount(product: ProductOut): number {
   return Number(product.price) - Number(product.discount_price)
 }
 
+// A price bound from the URL: a non-negative number, or null when absent/junk.
+function parsePrice(raw: string | null): number | null {
+  if (raw == null || raw.trim() === '') return null
+  const value = Number(raw)
+  return Number.isFinite(value) && value >= 0 ? value : null
+}
+
+function withinPrice(
+  product: ProductOut,
+  min: number | null,
+  max: number | null,
+): boolean {
+  const price = effectivePrice(product)
+  if (min != null && price < min) return false
+  if (max != null && price > max) return false
+  return true
+}
+
 function sortProducts(products: ProductOut[], sortBy: SortKey): ProductOut[] {
   const sorted = [...products]
   switch (sortBy) {
@@ -53,6 +71,77 @@ function sortProducts(products: ProductOut[], sortBy: SortKey): ProductOut[] {
   return sorted
 }
 
+// Sidebar price range. Draft values live locally and are committed on submit,
+// so typing a bound doesn't refilter the grid on every keystroke.
+function PriceFilter({
+  min,
+  max,
+  onApply,
+}: {
+  min: number | null
+  max: number | null
+  onApply: (min: number | null, max: number | null) => void
+}) {
+  const [from, setFrom] = useState(min == null ? '' : String(min))
+  const [to, setTo] = useState(max == null ? '' : String(max))
+
+  // Follow the URL when it changes elsewhere (browser back, reset, a shared link).
+  useEffect(() => {
+    setFrom(min == null ? '' : String(min))
+    setTo(max == null ? '' : String(max))
+  }, [min, max])
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    onApply(parsePrice(from), parsePrice(to))
+  }
+
+  const inputClass =
+    'w-full min-w-0 rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20'
+
+  return (
+    <form onSubmit={submit} className="mb-4 rounded-md border border-gray-200 p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-semibold text-gray-900">Ціна, ₴</span>
+        {(min != null || max != null) && (
+          <button
+            type="button"
+            onClick={() => onApply(null, null)}
+            className="text-xs text-brand hover:underline"
+          >
+            Скинути
+          </button>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          inputMode="numeric"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+          placeholder="від"
+          aria-label="Ціна від"
+          className={inputClass}
+        />
+        <span className="shrink-0 text-gray-400">—</span>
+        <input
+          inputMode="numeric"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          placeholder="до"
+          aria-label="Ціна до"
+          className={inputClass}
+        />
+      </div>
+      <button
+        type="submit"
+        className="mt-2 w-full rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-gray-700"
+      >
+        Застосувати
+      </button>
+    </form>
+  )
+}
+
 function App() {
   const [searchParams, setSearchParams] = useSearchParams()
   const query = (searchParams.get('q') ?? '').trim()
@@ -64,14 +153,41 @@ function App() {
     { query: { enabled: query.length > 0 } },
   )
 
-  const [sortBy, setSortBy] = useState<SortKey>('newest')
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
-    () => {
-      const raw = searchParams.get('categoryId')
-      const id = raw ? Number(raw) : NaN
-      return Number.isInteger(id) ? id : null
-    },
-  )
+  // Sort, category and price range live in the URL, so a reload — or a link
+  // pasted to someone else — restores exactly what the shopper was looking at.
+  const updateParams = (mutate: (params: URLSearchParams) => void) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        mutate(next)
+        return next
+      },
+      { replace: true },
+    )
+
+  const rawSort = searchParams.get('sort')
+  const sortBy: SortKey = SORT_OPTIONS.some((o) => o.value === rawSort)
+    ? (rawSort as SortKey)
+    : 'newest'
+  const setSortBy = (next: SortKey) =>
+    updateParams((params) => {
+      if (next === 'newest') params.delete('sort')
+      else params.set('sort', next)
+    })
+
+  const rawCategoryId = Number(searchParams.get('categoryId'))
+  const selectedCategoryId =
+    Number.isInteger(rawCategoryId) && rawCategoryId > 0 ? rawCategoryId : null
+
+  const priceMin = parsePrice(searchParams.get('priceMin'))
+  const priceMax = parsePrice(searchParams.get('priceMax'))
+  const setPriceRange = (min: number | null, max: number | null) =>
+    updateParams((params) => {
+      if (min == null) params.delete('priceMin')
+      else params.set('priceMin', String(min))
+      if (max == null) params.delete('priceMax')
+      else params.set('priceMax', String(max))
+    })
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
 
   // Store-wide popularity ranking (Trending Engine) for the "all products" view.
@@ -124,7 +240,11 @@ function App() {
     )
   }
 
-  const products = productsQuery.data?.data ?? []
+  const allProducts = productsQuery.data?.data ?? []
+  // Price filtering is client-side, like sorting: the catalog endpoint returns
+  // the full list in one call. Category counts follow the filter, so the
+  // sidebar shows how many products actually match.
+  const products = allProducts.filter((p) => withinPrice(p, priceMin, priceMax))
   const categories = categoriesQuery.data?.data ?? []
   const tree = buildCategoryTree(categories)
   const counts = subtreeCounts(products)
@@ -138,19 +258,13 @@ function App() {
   const byPopularity = (a: ProductOut, b: ProductOut) =>
     (popularRank.get(a.id) ?? Infinity) - (popularRank.get(b.id) ?? Infinity)
 
-  const selectCategory = (id: number | null) => {
-    setSelectedCategoryId(id)
-    // Leaving search mode when the user starts browsing categories.
-    if (query) {
-      setSearchParams(
-        (prev) => {
-          prev.delete('q')
-          return prev
-        },
-        { replace: true },
-      )
-    }
-  }
+  const selectCategory = (id: number | null) =>
+    updateParams((params) => {
+      if (id == null) params.delete('categoryId')
+      else params.set('categoryId', String(id))
+      // Leaving search mode when the user starts browsing categories.
+      params.delete('q')
+    })
 
   const toggleExpand = (id: number) =>
     setExpanded((prev) => {
@@ -172,15 +286,26 @@ function App() {
       ]
     : []
 
-  const categoryProducts = categoryQuery.data?.data ?? []
+  const categoryProducts = (categoryQuery.data?.data ?? []).filter((p) =>
+    withinPrice(p, priceMin, priceMax),
+  )
   const sortedCategoryProducts =
     sortBy === 'popular'
       ? categoryProducts
       : sortProducts(categoryProducts, sortBy)
 
+  const hasPriceFilter = priceMin != null || priceMax != null
+  const visibleCount =
+    selectedCategoryId === null ? products.length : sortedCategoryProducts.length
+  const noPriceMatches =
+    hasPriceFilter && visibleCount === 0 && !categoryQuery.isLoading
+
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-8 p-4 sm:p-6 lg:flex-row lg:p-8">
       <aside className="w-full shrink-0 lg:w-64">
+        {/* Price filter applies to the category/all views; search is server-ranked,
+            so hide it there rather than show an active filter that does nothing. */}
+        {!query && <PriceFilter min={priceMin} max={priceMax} onApply={setPriceRange} />}
         <nav className="flex flex-col gap-1">
           <button
             type="button"
@@ -233,7 +358,11 @@ function App() {
               </label>
             </div>
 
-            {selectedCategoryId === null ? (
+            {noPriceMatches ? (
+              <p className="rounded-md border border-gray-200 p-6 text-center text-gray-500">
+                За обраним діапазоном цін товарів немає.
+              </p>
+            ) : selectedCategoryId === null ? (
               <AllProductsView
                 products={products}
                 categories={categories}

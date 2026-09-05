@@ -24,8 +24,11 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const submitLogin = async () => {
-    const result = await login(email, password)
+  const submitLogin = async (creds?: { email: string; password: string }) => {
+    const result = await login(
+      creds?.email ?? email,
+      creds?.password ?? password,
+    )
     if (result.status === 'authed') {
       navigate('/')
     } else if (result.status === 'pending' && result.challenge_id) {
@@ -34,6 +37,20 @@ export function LoginPage() {
         challengeId: result.challenge_id,
         matchCode: result.match_code ?? 0,
       })
+    }
+  }
+
+  const loginAsDemo = async (account: DemoAccount) => {
+    setEmail(account.email)
+    setPassword(DEMO_PASSWORD)
+    setError(null)
+    setBusy(true)
+    try {
+      await submitLogin({ email: account.email, password: DEMO_PASSWORD })
+    } catch {
+      setError('Не вдалося увійти в демо-акаунт')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -124,6 +141,50 @@ export function LoginPage() {
           Зареєструватися
         </Link>
       </p>
+
+      <DemoAccounts onPick={loginAsDemo} disabled={busy} />
+    </div>
+  )
+}
+
+const DEMO_PASSWORD = 'demo2026'
+
+type DemoAccount = { email: string; label: string; hint: string }
+
+const DEMO_ACCOUNTS: DemoAccount[] = [
+  { email: 'demo.customer@ahet.store', label: 'Покупець', hint: 'кошик, замовлення, бонуси' },
+  { email: 'demo.operator@ahet.store', label: 'Оператор', hint: 'черга тікетів, макроси' },
+  { email: 'demo.owner@ahet.store', label: 'Власник', hint: 'аналітика, журнал дій' },
+]
+
+// A portfolio demo: let a visitor sign in as any role in one click, so they can
+// explore the storefront and the support workspace without registering.
+function DemoAccounts({
+  onPick,
+  disabled,
+}: {
+  onPick: (account: DemoAccount) => void
+  disabled: boolean
+}) {
+  return (
+    <div className="mt-6 rounded-xl border border-dashed border-gray-300 p-4">
+      <p className="mb-3 text-center text-xs font-medium uppercase tracking-wide text-gray-400">
+        Демо-доступ — увійдіть одним кліком
+      </p>
+      <div className="flex flex-col gap-2">
+        {DEMO_ACCOUNTS.map((account) => (
+          <button
+            key={account.email}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPick(account)}
+            className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2 text-left transition hover:border-brand hover:bg-brand-light disabled:opacity-60"
+          >
+            <span className="text-sm font-semibold text-gray-900">{account.label}</span>
+            <span className="truncate text-xs text-gray-500">{account.hint}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
