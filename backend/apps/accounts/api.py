@@ -282,10 +282,11 @@ def refresh_token(request, payload: RefreshIn):
     profile = Profile.objects.filter(user_id=refresh.get("user_id")).first()
     if profile is None:
         raise HttpError(401, "Сесію завершено")
-    # A stamped refresh token must match the current stamp (else it was logged
-    # out everywhere). Pre-feature tokens have no stamp — accept and re-stamp.
+    # A refresh token must carry the current stamp. Unstamped tokens predate the
+    # feature and would otherwise survive "log out everywhere" indefinitely,
+    # laundering themselves into fresh access tokens on every refresh.
     stamp = refresh.get("stamp")
-    if stamp is not None and stamp != str(profile.security_stamp):
+    if stamp is None or stamp != str(profile.security_stamp):
         raise HttpError(401, "Сесію завершено")
     access = refresh.access_token
     access["stamp"] = str(profile.security_stamp)

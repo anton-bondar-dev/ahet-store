@@ -650,6 +650,22 @@ def reject_action(request, approval_id: int):
 
 # --- Phase 4: impersonation --------------------------------------------------
 @router.post(
+    "/admin/impersonate/end", response=OkOut, auth=JWTAuth(), operation_id="end_impersonation"
+)
+def end_impersonation(request):
+    staff = _require_staff(request)
+    sessions = ImpersonationSession.objects.filter(staff=staff, ended_at__isnull=True)
+    for s in sessions:
+        s.ended_at = timezone.now()
+        s.save(update_fields=["ended_at"])
+        log_admin_action(
+            staff, AdminAuditLog.ACTION_IMPERSONATE_END, target_user=s.target_user,
+            session_id=s.id,
+        )
+    return {"ok": True}
+
+
+@router.post(
     "/admin/impersonate/{user_id}",
     response=ImpersonateOut,
     auth=JWTAuth(),
@@ -681,22 +697,6 @@ def impersonate_user(request, user_id: int):
         "target_username": target.username,
         "target_name": target.first_name or target.username,
     }
-
-
-@router.post(
-    "/admin/impersonate/end", response=OkOut, auth=JWTAuth(), operation_id="end_impersonation"
-)
-def end_impersonation(request):
-    staff = _require_staff(request)
-    sessions = ImpersonationSession.objects.filter(staff=staff, ended_at__isnull=True)
-    for s in sessions:
-        s.ended_at = timezone.now()
-        s.save(update_fields=["ended_at"])
-        log_admin_action(
-            staff, AdminAuditLog.ACTION_IMPERSONATE_END, target_user=s.target_user,
-            session_id=s.id,
-        )
-    return {"ok": True}
 
 
 # --- Phase 7: audit trail (owner-only) ---------------------------------------

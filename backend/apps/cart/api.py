@@ -12,7 +12,12 @@ from apps.core.permissions import forbid_blocked, forbid_staff
 
 from .models import Cart, CartItem
 from .schemas import AddToCartIn, CartOut, UpdateQuantityIn
-from .services import auth_user, get_current_cart, get_or_create_current_cart
+from .services import (
+    auth_user,
+    get_current_cart,
+    get_or_create_current_cart,
+    impersonator_id,
+)
 
 router = Router(tags=["cart"])
 
@@ -23,6 +28,12 @@ def _require_customer(request):
     user = auth_user(request)
     forbid_staff(user)
     forbid_blocked(user)
+    # Cart endpoints authenticate via auth_user(), which bypasses StampedJWTAuth
+    # and its impersonation guard — so block writes under an impersonation token
+    # here too, or a staff member (or anyone with the public demo operator login)
+    # could mutate a real customer's cart while "viewing as" them.
+    if impersonator_id(request) is not None:
+        raise HttpError(403, "Ця дія недоступна в режимі перегляду від імені клієнта")
 
 
 def serialize_cart(cart: Optional[Cart]) -> dict:
