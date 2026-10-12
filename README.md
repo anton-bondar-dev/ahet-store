@@ -3,9 +3,8 @@
 A full-stack e-commerce platform with a built-in support helpdesk, built end to
 end — storefront, checkout, and the internal tooling a team needs to run it.
 
-**Live demo:** https://django-ecommerce.overpro.fit
-
-Sign in with one click on the login page — three roles, no registration needed:
+Three roles, each with its own tooling — run it locally and seed one-click demo
+accounts with `python manage.py seed_demo`:
 
 | Role | What it shows |
 | --- | --- |
@@ -13,7 +12,7 @@ Sign in with one click on the login page — three roles, no registration needed
 | Оператор (operator) | ticket queue, canned-reply macros, customer tags, impersonation |
 | Власник (owner) | everything above, plus analytics, the approval queue, and the audit log |
 
-Password for all demo accounts: `demo2026`.
+Password for all seeded demo accounts: `demo2026`.
 
 ---
 
